@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { API_BASE } from '../../lib/api';
 import { TopBar } from '@/components/TopBar';
 import { useProfile } from '@/lib/hooks/useProfile';
 
@@ -196,7 +197,7 @@ export default function NetworkPage() {
   };
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/v1/architecture')
+    fetch(`${API_BASE}/api/v1/architecture`)
       .then((r) => {
         if (!r.ok) throw new Error(`Backend ${r.status}`);
         return r.json();

@@ -8,8 +8,10 @@
  */
 
 import { readApiKeySync, type Provider } from '@/lib/hooks/useApiKey';
+import { API_BASE } from '@/lib/api';
+import { sessionHeaders } from '@/lib/sessionId';
 
-const BASE = '/api/v1/documents';
+const BASE = `${API_BASE}/api/v1/documents`;
 
 
 export interface UploadedDocument {
@@ -84,8 +86,9 @@ export async function uploadDocument(
   form.append('file', file);
 
   const res = await fetch(`${BASE}/upload`, {
-    method: 'POST',
-    body:   form,
+    method:  'POST',
+    headers: sessionHeaders(),
+    body:    form,
   });
   if (!res.ok) {
     const detail = await res.text();
@@ -99,7 +102,7 @@ export async function listDocuments(
   caseReference: string,
 ): Promise<DocumentRecord[]> {
   const qs = new URLSearchParams({ case_reference: caseReference });
-  const res = await fetch(`${BASE}/list?${qs.toString()}`);
+  const res = await fetch(`${BASE}/list?${qs.toString()}`, { headers: sessionHeaders() });
   if (!res.ok) throw new Error(`List failed: ${res.status}`);
   const data = await res.json();
   return data.documents || [];
@@ -112,7 +115,8 @@ export async function deleteDocument(
 ): Promise<void> {
   const qs = new URLSearchParams({ case_reference: caseReference });
   const res = await fetch(`${BASE}/${fileId}?${qs.toString()}`, {
-    method: 'DELETE',
+    method:  'DELETE',
+    headers: sessionHeaders(),
   });
   if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
 }
@@ -125,6 +129,7 @@ export async function analyzeDocument(
   const keyData = readApiKeySync();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    ...sessionHeaders(),
   };
   if (keyData) {
     headers['X-Parvis-Api-Key']      = keyData.key;

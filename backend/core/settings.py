@@ -5,6 +5,7 @@ Reads from a `.env` file at the backend root in dev; from real env vars
 in production.
 """
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,5 +31,17 @@ class Settings(BaseSettings):
     supabase_anon_key:   str | None = None
     supabase_jwt_secret: str | None = None
 
+
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def _parse_cors_origins(cls, v):
+        """Accept JSON list or comma-separated string from env vars."""
+        if isinstance(v, str):
+            s = v.strip()
+            if s.startswith("["):
+                return v
+            return [o.strip() for o in s.split(",") if o.strip()]
+        return v
 
 settings = Settings()

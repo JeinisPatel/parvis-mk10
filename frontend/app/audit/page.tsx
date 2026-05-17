@@ -4,9 +4,8 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useProfile } from '../../lib/hooks/useProfile';
 import { useEvidence } from '../../lib/hooks/useEvidence';
-
-
-const API_BASE = 'http://localhost:8000';
+import { API_BASE } from '../../lib/api';
+import { sessionHeaders } from '../../lib/sessionId';
 
 type SectionDef = { id: string; label: string; desc: string };
 
@@ -78,7 +77,7 @@ export default function AuditPage() {
   }, [profileHydrated, caseSlug]);
 
   useEffect(() => {
-    fetch(`${API_BASE}/api/v1/documents/list`)
+    fetch(`${API_BASE}/api/v1/documents/list`, { headers: sessionHeaders() })
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         if (!data) return;
@@ -222,7 +221,7 @@ export default function AuditPage() {
 
       const response = await fetch(`${API_BASE}/api/v1/audit/generate`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', ...sessionHeaders() },
         body: JSON.stringify(body),
       });
 

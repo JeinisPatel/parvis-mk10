@@ -1,10 +1,28 @@
 /**
  * Typed API client for the PARVIS Mk 9 FastAPI backend.
  *
- * All requests go through Next.js's /api proxy (see next.config.mjs) which
- * forwards to http://localhost:8000 in dev. In production the proxy points
- * at the deployed backend.
+ * In dev, requests use relative paths and Next.js's /api proxy
+ * (next.config.mjs) forwards to http://localhost:8000. In production,
+ * NEXT_PUBLIC_API_BASE is prepended so requests go direct to the deployed
+ * backend (CORS-enabled). Every request automatically carries the
+ * X-Session-Id header so the backend can isolate per-browser state.
  */
+
+import { sessionHeaders } from './sessionId';
+
+
+/**
+ * Base URL for all backend requests.
+ *
+ * Empty in dev — `/api/v1/foo` is a relative path that Next.js rewrites
+ * to `http://localhost:8000/api/v1/foo` via the proxy in next.config.mjs.
+ *
+ * Set NEXT_PUBLIC_API_BASE on Vercel (or in Tauri builds) to the deployed
+ * backend URL — e.g. `https://parvis-backend.up.railway.app` — and the
+ * same relative-looking paths become absolute requests to that origin.
+ */
+export const API_BASE: string = process.env.NEXT_PUBLIC_API_BASE || '';
+
 
 export interface InferenceRequest {
   evidence:           Record<string, 0 | 1>;
@@ -177,9 +195,9 @@ export interface HealthResponse {
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
 async function postJSON<T>(path: string, body: unknown): Promise<T> {
-  const res = await fetch(path, {
+  const res = await fetch(`${API_BASE}${path}`, {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: { 'Content-Type': 'application/json', ...sessionHeaders() },
     body:    JSON.stringify(body),
   });
   if (!res.ok) {
@@ -194,7 +212,7 @@ async function postJSON<T>(path: string, body: unknown): Promise<T> {
 }
 
 async function getJSON<T>(path: string): Promise<T> {
-  const res = await fetch(path);
+  const res = await fetch(`${API_BASE}${path}`, { headers: sessionHeaders() });
   if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
   return res.json() as Promise<T>;
 }

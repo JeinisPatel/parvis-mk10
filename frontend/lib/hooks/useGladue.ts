@@ -17,6 +17,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import { API_BASE } from '../api';
+import { sessionHeaders } from '../sessionId';
 import { readApiKeySync } from './useApiKey';
 
 
@@ -323,7 +325,7 @@ export function useGladue(caseReference: string | null | undefined) {
     setState((prev) => ({ ...prev, suggesting: factorKey }));
 
     try {
-      const resp = await fetch('http://localhost:8000/api/v1/gladue/suggest_factor_text', {
+      const resp = await fetch(`${API_BASE}/api/v1/gladue/suggest_factor_text`, {
         method: 'POST',
         headers: {
           'Content-Type':          'application/json',
@@ -385,7 +387,7 @@ export function useGladue(caseReference: string | null | undefined) {
     }));
 
     try {
-      const resp = await fetch('http://localhost:8000/api/v1/gladue/generate_narrative', {
+      const resp = await fetch(`${API_BASE}/api/v1/gladue/generate_narrative`, {
         method:  'POST',
         signal:  abortRef.current.signal,
         headers: {

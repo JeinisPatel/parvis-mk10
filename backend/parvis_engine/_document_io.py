@@ -37,8 +37,16 @@ def _safe_slug(text: str) -> str:
     return (s or "case")[:40]
 
 
-def storage_path_for(case_reference: str, file_id: str, original_filename: str) -> Path:
-    case_dir = UPLOAD_ROOT / _safe_slug(case_reference)
+def storage_path_for(
+    case_reference: str,
+    file_id: str,
+    original_filename: str,
+    session_id: str | None = None,
+) -> Path:
+    base = UPLOAD_ROOT
+    if session_id:
+        base = base / _safe_slug(session_id)
+    case_dir = base / _safe_slug(case_reference)
     case_dir.mkdir(parents=True, exist_ok=True)
     safe_name = re.sub(r"[^A-Za-z0-9._-]", "_", original_filename)[:120]
     return case_dir / f"{file_id}_{safe_name}"

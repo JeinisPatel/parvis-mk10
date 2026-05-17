@@ -15,7 +15,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Header
 from fastapi.responses import FileResponse
 from pydantic import BaseModel
 
@@ -54,12 +54,15 @@ class ListResponse(BaseModel):
     documents:       list[DocumentRecord]
 
 
-def _manifest_path(case_reference: str) -> Path:
-    return UPLOAD_ROOT / _safe_slug(case_reference) / "_manifest.json"
+def _manifest_path(case_reference: str, session_id: str | None = None) -> Path:
+    base = UPLOAD_ROOT
+    if session_id:
+        base = base / _safe_slug(session_id)
+    return base / _safe_slug(case_reference) / "_manifest.json"
 
 
-def _read_manifest(case_reference: str) -> list[dict[str, Any]]:
-    p = _manifest_path(case_reference)
+def _read_manifest(case_reference: str, session_id: str | None = None) -> list[dict[str, Any]]:
+    p = _manifest_path(case_reference, session_id)
     if not p.is_file():
         return []
     try:
@@ -68,8 +71,8 @@ def _read_manifest(case_reference: str) -> list[dict[str, Any]]:
         return []
 
 
-def _write_manifest(case_reference: str, items: list[dict[str, Any]]) -> None:
-    p = _manifest_path(case_reference)
+def _write_manifest(case_reference: str, items: list[dict[str, Any]], session_id: str | None = None) -> None:
+    p = _manifest_path(case_reference, session_id)
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(items, indent=2))
 
@@ -78,6 +81,7 @@ def _write_manifest(case_reference: str, items: list[dict[str, Any]]) -> None:
 async def upload_document(
     case_reference: str = Form(...),
     file: UploadFile = File(...),
+    x_session_id: str | None = Header(default=None),
 ) -> UploadResponse:
     raw = await file.read()
     if len(raw) == 0:
@@ -90,7 +94,7 @@ async def upload_document(
 
     filename = file.filename or "upload"
     file_id  = make_file_id(raw, filename)
-    target   = storage_path_for(case_reference, file_id, filename)
+    target   = storage_path_for(case_reference, file_id, filename, session_id=x_session_id)
     target.write_bytes(raw)
 
     try:
@@ -101,7 +105,7 @@ async def upload_document(
 
     truncated = len(text) >= 15000
 
-    manifest = _read_manifest(case_reference)
+    manifest = _read_manifest(case_reference, session_id=x_session_id)
     manifest = [m for m in manifest if m.get("file_id") != file_id]
     record = {
         "file_id":           file_id,
@@ -111,7 +115,7 @@ async def upload_document(
         "uploaded_at":       datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
     manifest.append(record)
-    _write_manifest(case_reference, manifest)
+    _write_manifest(case_reference, manifest, session_id=x_session_id)
 
     return UploadResponse(
         file_id=file_id,
@@ -126,8 +130,11 @@ async def upload_document(
 
 
 @router.get("/documents/list", response_model=ListResponse)
-async def list_documents(case_reference: str) -> ListResponse:
-    items = _read_manifest(case_reference)
+async def list_documents(
+    case_reference: str,
+    x_session_id: str | None = Header(default=None),
+) -> ListResponse:
+    items = _read_manifest(case_reference, session_id=x_session_id)
     return ListResponse(
         case_reference=case_reference,
         documents=[DocumentRecord(**m) for m in items],
@@ -135,13 +142,17 @@ async def list_documents(case_reference: str) -> ListResponse:
 
 
 @router.delete("/documents/{file_id}")
-async def delete_document(file_id: str, case_reference: str) -> dict:
-    manifest = _read_manifest(case_reference)
+async def delete_document(
+    file_id: str,
+    case_reference: str,
+    x_session_id: str | None = Header(default=None),
+) -> dict:
+    manifest = _read_manifest(case_reference, session_id=x_session_id)
     record = next((m for m in manifest if m["file_id"] == file_id), None)
     if not record:
         raise HTTPException(status_code=404, detail="No such document for this case.")
 
-    target = storage_path_for(case_reference, file_id, record["filename"])
+    target = storage_path_for(case_reference, file_id, record["filename"], session_id=x_session_id)
     try:
         if target.is_file():
             target.unlink()
@@ -149,18 +160,22 @@ async def delete_document(file_id: str, case_reference: str) -> dict:
         pass
 
     manifest = [m for m in manifest if m["file_id"] != file_id]
-    _write_manifest(case_reference, manifest)
+    _write_manifest(case_reference, manifest, session_id=x_session_id)
     return {"deleted": True, "file_id": file_id}
 
 
 @router.get("/documents/file/{file_id}")
-async def get_file(file_id: str, case_reference: str):
-    manifest = _read_manifest(case_reference)
+async def get_file(
+    file_id: str,
+    case_reference: str,
+    x_session_id: str | None = Header(default=None),
+):
+    manifest = _read_manifest(case_reference, session_id=x_session_id)
     record = next((m for m in manifest if m["file_id"] == file_id), None)
     if not record:
         raise HTTPException(status_code=404, detail="No such document for this case.")
 
-    target = storage_path_for(case_reference, file_id, record["filename"])
+    target = storage_path_for(case_reference, file_id, record["filename"], session_id=x_session_id)
     if not target.is_file():
         raise HTTPException(status_code=410, detail="File no longer on disk.")
     return FileResponse(

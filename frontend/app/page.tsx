@@ -95,7 +95,7 @@ function ErrorState({ err }: { err: Error }) {
     >
       <div className="label-caps mb-2" style={{ color: PV.risk }}>Backend unreachable</div>
       <div className="caption-italic text-ink2">
-        Make sure FastAPI is running on <code className="font-mono">http://localhost:8000</code>.
+        Make sure the FastAPI backend is reachable (set <code className="font-mono">NEXT_PUBLIC_API_BASE</code> in production, or run <code className="font-mono">uvicorn main:app --port 8000</code> locally).
       </div>
       <pre className="mt-3 font-mono text-[11px] text-ink3 whitespace-pre-wrap">{err.message}</pre>
     </div>
