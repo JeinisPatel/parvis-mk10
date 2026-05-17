@@ -17,6 +17,10 @@ dependencies = [
     # Auth (Phase A.5) — uncomment when wiring Supabase
     # "pyjwt[crypto]>=2.9",
     # "supabase>=2.10",
+    "python-docx>=1.2.0",
+    "reportlab>=4.5.1",
+    "anthropic>=0.102.0",
+    "pypdf>=6.11.0",
 ]
 
 [project.optional-dependencies]

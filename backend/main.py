@@ -22,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from api.v1 import architecture, health, inference, quantum, record_analysis, documents, document_analysis, intake_chat
 from api.v1 import sce
 from api.v1 import gladue
+from api.v1 import audit
 from core.settings import settings
 
 
@@ -87,6 +88,7 @@ app.include_router(document_analysis.router, prefix="/api/v1")
 app.include_router(intake_chat.router, prefix="/api/v1")
 app.include_router(gladue.router)
 app.include_router(sce.router)
+app.include_router(audit.router)
 
 @app.get("/")
 async def root() -> dict[str, str]:
