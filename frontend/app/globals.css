@@ -1,0 +1,22 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400;1,9..144,500&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html, body {
+    @apply h-full;
+  }
+  body {
+    @apply bg-paper text-ink font-ui antialiased;
+  }
+  /* Italic captions used everywhere — encode the pattern once */
+  .caption-italic {
+    @apply font-serif italic text-ink3 text-[12.5px] leading-[1.55];
+  }
+  /* Monospace caps used for breadcrumbs, section labels, etc. */
+  .label-caps {
+    @apply font-mono text-[10.5px] tracking-caps uppercase text-ink4;
+  }
+}
