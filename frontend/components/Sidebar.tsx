@@ -66,7 +66,7 @@ const NAV: NavGroup[] = [
   {
     phase: '04 Report', color: PV.output,
     items: [
-      { href: '/report', label: 'Audit report', icon: 'report', status: 'todo' },
+      { href: '/audit', label: 'Audit report', icon: 'report', status: 'todo' },
     ],
   },
 ];
@@ -202,7 +202,7 @@ export function Sidebar() {
         </Link>
 
         <Link
-          href="/architecture"
+          href="/network"
           className={
             'flex items-center gap-2.5 rounded-lg transition-colors ' +
             (pathname === '/architecture'
