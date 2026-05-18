@@ -49,8 +49,9 @@ export function LivePosteriorRail({
   frame  = DEFAULT_FRAME,
 }: Props) {
   const { data, isLoading, error } = useQuery({
-    queryKey: ['posterior', 'demo-case'],
+    queryKey: ['posterior', 'current'],
     queryFn: () => runInference({ evidence: DEMO_EVIDENCE }),
+    staleTime: Infinity,
   });
 
   const posterior = data?.do_risk ?? 0.5;

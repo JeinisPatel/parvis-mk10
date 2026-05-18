@@ -34,12 +34,13 @@ export function TopBar({ breadcrumb = 'Case overview', showPosterior = true }: P
   const profile = useLiveProfile();
 
   const { data } = useQuery({
-    queryKey: ['posterior', 'demo-case'],
+    queryKey: ['posterior', 'current'],
     queryFn: () =>
       runInference({
         evidence: { '5': 1, '6': 1, '7': 1, '8': 1, '9': 1, '17': 1 },
       }),
     enabled: showPosterior,
+    staleTime: Infinity,
   });
 
   // Compose the case heading from the live profile, falling back to demo

@@ -101,6 +101,16 @@ export function useEvidence(): UseEvidenceResult {
     staleTime: 60_000,
   });
 
+  // Mirror the latest posterior to a shared key so the TopBar and
+  // LivePosteriorRail reflect the user's current evidence without owning
+  // the toggle state themselves. This is the single source of truth for
+  // 'what posterior does the case currently have?'.
+  useEffect(() => {
+    if (query.data) {
+      qc.setQueryData(['posterior', 'current'], query.data);
+    }
+  }, [query.data, qc]);
+
   function toggle(nodeId: string) {
     setEvidence((prev) => {
       const current = prev[nodeId];
