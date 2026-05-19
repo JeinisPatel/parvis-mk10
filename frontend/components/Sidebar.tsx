@@ -90,7 +90,7 @@ export function Sidebar() {
 
   return (
     <aside
-      className="w-60 flex-none bg-paper2 border-r border-border flex flex-col gap-4 overflow-hidden"
+      className="w-64 flex-none bg-paper2 border-r border-border flex flex-col gap-4 overflow-hidden"
       style={{ padding: '22px 16px 18px 16px' }}
     >
       {/* Brand — Ethical AI mark + PARVIS wordmark */}
@@ -108,13 +108,13 @@ export function Sidebar() {
         <div className="leading-tight">
           <div
             className="font-bold tracking-caps"
-            style={{ fontSize: 13, color: PV.navy }}
+            style={{ fontSize: 14, color: PV.navy }}
           >
             PARVIS
           </div>
           <div
             className="font-serif italic text-ink3"
-            style={{ fontSize: 11 }}
+            style={{ fontSize: 12 }}
           >
             Mk 9
           </div>
@@ -130,11 +130,11 @@ export function Sidebar() {
               <div className="flex items-baseline justify-between mb-1.5 px-1">
                 <span
                   className="font-mono font-bold tracking-caps uppercase"
-                  style={{ fontSize: 10, color: group.color }}
+                  style={{ fontSize: 11, color: group.color }}
                 >
                   {group.phase}
                 </span>
-                <span className="font-mono text-ink4" style={{ fontSize: 10 }}>
+                <span className="font-mono text-ink4" style={{ fontSize: 11 }}>
                   {done}/{group.items.length}
                 </span>
               </div>
@@ -154,7 +154,7 @@ export function Sidebar() {
                       style={{
                         gap: 9,
                         padding: '6px 8px',
-                        fontSize: 12.5,
+                        fontSize: 14,
                         borderLeft: active ? `2px solid ${group.color}` : '2px solid transparent',
                         marginLeft: active ? -2 : 0,
                         paddingLeft: active ? 6 : 8,
@@ -169,7 +169,7 @@ export function Sidebar() {
                       {it.count != null && it.count > 0 && (
                         <span
                           className="font-mono text-ink3"
-                          style={{ fontSize: 10 }}
+                          style={{ fontSize: 11 }}
                         >
                           {it.count}
                         </span>
@@ -194,7 +194,7 @@ export function Sidebar() {
               ? 'bg-paper3 text-ink'
               : 'bg-paper3 hover:bg-paper4 text-ink3 hover:text-ink2')
           }
-          style={{ padding: '8px 10px', fontSize: 12 }}
+          style={{ padding: '8px 10px', fontSize: 13 }}
         >
           <Glyph d={ICON.gear ?? ICON.net} size={13} color={pathname === '/settings' ? PV.distortion : PV.ink3} />
           <span className="flex-1">Settings</span>
@@ -209,7 +209,7 @@ export function Sidebar() {
               ? 'bg-paper3 text-ink'
               : 'bg-paper3 hover:bg-paper4 text-ink3 hover:text-ink2')
           }
-          style={{ padding: '8px 10px', fontSize: 12 }}
+          style={{ padding: '8px 10px', fontSize: 13 }}
         >
           <Glyph d={ICON.net} size={13} color={pathname === '/architecture' ? PV.distortion : PV.ink3} />
           <span className="flex-1">Network architecture</span>
