@@ -5,7 +5,7 @@ structured interviews.
 The protocol is fully deterministic — no LLM. Its job is to tell the LLM,
 on every turn, where the interview *currently is* in terms of doctrinal
 completeness, and what should be asked next. The LLM only handles natural
-language: extracting fields from the practitioner's prose and generating
+language: extracting fields from the user's prose and generating
 the next conversational turn.
 
 Six phases mirror the Tetrad and the screens of the audit:
@@ -64,16 +64,16 @@ PHASES: tuple[PhaseSpec, ...] = (
         key="identity",
         label="Identity & charge",
         purpose=(
-            "Establish who the client is and what they are charged with. "
+            "Establish who the offender is and what they are charged with. "
             "Foundation for everything else."
         ),
         opening_question=(
-            "Let's start with the basics. Who is the client, and what are "
+            "Let's start with the basics. Who is the offender, and what are "
             "they charged with? Include their age, jurisdiction, and the "
             "section of the Criminal Code if you have it."
         ),
         fields=(
-            FieldSpec("name",             "Client name"),
+            FieldSpec("name",             "Name"),
             FieldSpec("age",              "Age"),
             FieldSpec("jurisdiction",     "Province / territory"),
             FieldSpec("proposed_offence", "Proposed or index offence"),
@@ -91,7 +91,7 @@ PHASES: tuple[PhaseSpec, ...] = (
             "Maps to N10 (intergenerational trauma) and N12 (Gladue misapplication)."
         ),
         opening_question=(
-            "Is the client Indigenous? If so, can you tell me about their "
+            "Is the offender Indigenous? If so, can you tell me about their "
             "Nation, community, and any intergenerational factors — "
             "residential school exposure in the family, dislocation, "
             "child welfare involvement, addiction patterns?"
@@ -122,7 +122,7 @@ PHASES: tuple[PhaseSpec, ...] = (
             "shape of the pattern. Maps to N2 (violent history)."
         ),
         opening_question=(
-            "Tell me about the client's criminal history. Roughly how many "
+            "Tell me about the offender's criminal history. Roughly how many "
             "prior convictions, what kinds of offences, when did they happen, "
             "and is there a pattern — escalating, stable, de-escalating?"
         ),
@@ -146,11 +146,11 @@ PHASES: tuple[PhaseSpec, ...] = (
         purpose=(
             "Map known assessments. Critically: capture *whether* tools were "
             "used and what they said, NOT validate them. The Ewert concern "
-            "(N5 invalid risk tools) requires us to know what's in the file "
-            "so we can challenge inappropriate cross-cultural use."
+            "(N5 invalid risk tools) requires knowing what is in the file "
+            "so the validity of cross-cultural application can be evaluated."
         ),
         opening_question=(
-            "What psychological or risk assessments has the client had? "
+            "What psychological or risk assessments has the offender had? "
             "PCL-R, Static-99R, VRAG, FASD assessments, anything else? "
             "I want to know what was administered, not whether it was valid."
         ),
@@ -199,12 +199,12 @@ PHASES: tuple[PhaseSpec, ...] = (
         key="systemic_context",
         label="Systemic context (Morris / Ellis)",
         purpose=(
-            "Capture systemic factors that ground a Morris-Ellis social-context-"
-            "evidence (SCE) submission. Over-policing (N14 / Le), community "
+            "Capture systemic factors relevant to a Morris-Ellis social-context-"
+            "evidence (SCE) analysis. Over-policing (N14 / Le), community "
             "deprivation, gaming risk (N13)."
         ),
         opening_question=(
-            "Finally, the systemic context. Is the client from an "
+            "Finally, the systemic context. Is the offender from an "
             "over-policed community? Are there Morris-Ellis grounds — "
             "racial profiling, neighbourhood enforcement disparities, "
             "carceral patterns in the community?"
@@ -217,7 +217,7 @@ PHASES: tuple[PhaseSpec, ...] = (
             FieldSpec("community_deprivation",   "Community deprivation",
                       required=False),
             FieldSpec("gaming_risk_signals",     "Gaming risk signals", required=False,
-                      description="Practitioner-observed risk distortions"),
+                      description="Observed risk distortions"),
         ),
     ),
 )
@@ -321,7 +321,7 @@ def next_focus(extracted: dict) -> dict:
             "phase":    None,
             "cadence":  "wrap_up",
             "directive": (
-                "All doctrinal fields are populated. Thank the practitioner, "
+                "All doctrinal fields are populated. Thank the user, "
                 "summarise the case in 2-3 sentences highlighting the strongest "
                 "Tetrad themes, and remind them to review the suggestion cards "
                 "before moving to the audit screens."
@@ -374,7 +374,7 @@ def llm_output_schema_description() -> str:
 You must return a single JSON object with exactly this shape:
 
 {
-  "message": "<your conversational response to the practitioner, prose, 1-3 paragraphs>",
+  "message": "<your conversational response to the user, prose, 1-3 paragraphs>",
   "extracted": {
       "<field_key>": <value>,
       ...
@@ -392,9 +392,18 @@ You must return a single JSON object with exactly this shape:
 }
 
 Rules:
-- "message" is what the practitioner will read in the chat thread.
+- "message" is what the user will read in the chat thread.
 - "extracted" contains *only* fields you are confident about from this turn.
+- Field keys must be neutral and consistent with the Criminal Code Part XXIV
+  terminology. Use "offender_name", "offender_age", "offence", "indigenous_status",
+  "user_role" — NEVER "client_name" or any other role-specific term. PARVIS may be
+  assisting Crown, defence, or judicial users; neutral terminology is required.
 - "suggestions" mirrors extracted but with rationale and confidence — these
   become the cards in the sidebar. One entry per extracted field.
+- "rationale" must describe the speech act neutrally. Use "User stated…",
+  "Explicitly identified…", "Inferred from…", "The offender is described as…".
+  Do NOT use role-specific phrasing such as "Practitioner stated", "Counsel said",
+  "Defence indicated", or "Crown submitted" unless the user has self-identified
+  in that role and mirroring is appropriate.
 - Return raw JSON only. No markdown fences, no preamble, no commentary outside the JSON.
 """
