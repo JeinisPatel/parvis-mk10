@@ -27,6 +27,8 @@ message so the frontend renders the "configure key" banner.
 from __future__ import annotations
 
 import json
+import logging
+import re
 from typing import Any, Optional
 
 from fastapi import APIRouter, Header, HTTPException
@@ -40,6 +42,8 @@ from parvis_engine._intake_protocol import (
 )
 
 router = APIRouter()
+
+logger = logging.getLogger(__name__)
 
 
 # Frontend → Mk 8-analyzer provider name parity
@@ -146,6 +150,15 @@ Fields already filled across the interview:
 ═══ OUTPUT SCHEMA ═══
 
 {llm_output_schema_description()}
+
+═══ STRICT OUTPUT FORMAT ═══
+
+Respond with raw JSON only. Your entire response MUST be a single JSON
+object starting with {{ and ending with }}. Do not wrap the JSON in
+markdown code fences (no triple-backticks, no json marker). Do not
+include any text before the opening {{. Do not include any text after
+the closing }}. Do not add commentary, prefaces, or explanations
+outside the JSON object.
 """
 
 
@@ -169,12 +182,64 @@ def _call_anthropic(
     ]
     messages.append({"role": "user", "content": user_message})
 
+    # Force structured output via tool use. Claude 4.x does not support
+    # assistant-message prefill, so we define a single "respond" tool whose
+    # input schema mirrors the JSON shape the prompt describes, and force
+    # the model to call it. The tool_use block in the response contains a
+    # native dict guaranteed to match the schema.
+    respond_tool = {
+        "name": "respond",
+        "description": (
+            "Respond to the user with a conversational message, and extract "
+            "any new structured fields and per-field suggestions."
+        ),
+        "input_schema": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "description": "The conversational reply to show the user.",
+                },
+                "extracted": {
+                    "type": "object",
+                    "description": "New structured fields extracted from this turn.",
+                    "additionalProperties": True,
+                },
+                "suggestions": {
+                    "type": "array",
+                    "description": "Per-field suggestions with confidence and rationale.",
+                    "items": {
+                        "type": "object",
+                        "properties": {
+                            "field":      {"type": "string"},
+                            "value":      {},
+                            "confidence": {"type": "number"},
+                            "rationale":  {"type": "string"},
+                        },
+                        "required": ["field"],
+                    },
+                },
+            },
+            "required": ["message"],
+        },
+    }
+
     response = client.messages.create(
         model="claude-sonnet-4-6",
-        max_tokens=2000,
+        max_tokens=4000,
         system=system_prompt,
+        tools=[respond_tool],
+        tool_choice={"type": "tool", "name": "respond"},
         messages=messages,
     )
+
+    # Pull the tool_use block's input dict and serialize back to JSON for
+    # the downstream parser. Falls back to text concatenation if for some
+    # reason the model returned text instead (shouldn't happen with
+    # tool_choice forced, but keeps the diagnostic logger informative).
+    for block in response.content:
+        if getattr(block, "type", None) == "tool_use" and block.name == "respond":
+            return json.dumps(block.input)
 
     text_chunks = []
     for block in response.content:
@@ -202,8 +267,9 @@ def _call_openai(
 
     response = client.chat.completions.create(
         model="gpt-4o",
-        max_tokens=2000,
+        max_tokens=4000,
         messages=messages,
+        response_format={"type": "json_object"},
     )
     return response.choices[0].message.content.strip()
 
@@ -221,42 +287,50 @@ def _call_gemini(
 
 # ── JSON-from-LLM parser ─────────────────────────────────────────────────────
 
+_FENCE_RE = re.compile(
+    r"^\s*```(?:json|JSON)?\s*\n?(.*?)\n?\s*```\s*$",
+    re.DOTALL,
+)
+
+
+def _strip_fences(s: str) -> str:
+    """Strip a single layer of markdown code fences if present."""
+    m = _FENCE_RE.match(s)
+    return m.group(1) if m else s
+
+
 def _extract_json(raw: str) -> Optional[dict]:
     """Pull the first complete JSON object out of the LLM's response.
 
-    LLMs sometimes wrap JSON in ```json fences or prepend a stray sentence
-    even when told not to; we strip those defensively.
+    Robust against:
+      - Leading/trailing whitespace
+      - Markdown code fences (```json ... ``` or ``` ... ```)
+      - Leading or trailing prose around the JSON
+      - Brace characters inside string literals (raw_decode handles this
+        correctly, unlike naive depth-counting)
     """
     s = raw.strip()
-    if s.startswith("```"):
-        # Strip ``` and optional 'json' marker
-        lines = s.split("\n")
-        if lines and lines[0].startswith("```"):
-            lines = lines[1:]
-        if lines and lines[-1].strip().startswith("```"):
-            lines = lines[:-1]
-        s = "\n".join(lines).strip()
+    s = _strip_fences(s).strip()
 
-    # Find first { and matching last }
-    start = s.find("{")
-    if start < 0:
-        return None
-    depth = 0
-    end = -1
-    for i, ch in enumerate(s[start:], start=start):
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-            if depth == 0:
-                end = i
-                break
-    if end < 0:
-        return None
+    # Fast path: the entire string is valid JSON.
     try:
-        return json.loads(s[start:end + 1])
+        return json.loads(s)
     except json.JSONDecodeError:
-        return None
+        pass
+
+    # Scan for the first '{' that starts a parseable JSON object.
+    decoder = json.JSONDecoder()
+    for start in range(len(s)):
+        if s[start] != "{":
+            continue
+        try:
+            obj, _end = decoder.raw_decode(s[start:])
+            if isinstance(obj, dict):
+                return obj
+        except json.JSONDecodeError:
+            continue
+
+    return None
 
 
 # ── Endpoint ─────────────────────────────────────────────────────────────────
@@ -327,6 +401,12 @@ async def intake_turn(
     # Parse the LLM's JSON
     parsed = _extract_json(raw)
     if parsed is None:
+        # Log the failing raw output so we can diagnose recurrent parse
+        # failures without having to reproduce them live.
+        logger.warning(
+            "Intake JSON parse failure (provider=%s, case=%s). Raw output: %r",
+            fe_provider, body.case_reference, raw[:1500],
+        )
         # The LLM returned text but not valid JSON. Surface the raw text
         # as the assistant message so the practitioner still sees something
         # useful, but flag the parse failure.
