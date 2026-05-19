@@ -43,9 +43,11 @@ export function TopBar({ breadcrumb = 'Case overview', showPosterior = true }: P
     staleTime: Infinity,
   });
 
-  // Compose the case heading from the live profile, falling back to demo
-  // values when no profile is saved yet.
-  const reference = profile?.caseReference || 'R v Akwasi';
+  // Compose the case heading from the live profile. When no case has
+  // been entered yet, render an italic placeholder rather than a fake
+  // default — first-time users should see a clean slate.
+  const isPlaceholder = !profile?.caseReference;
+  const reference = profile?.caseReference || 'Untitled case';
   const courtLine = composeCourtLine(profile);
 
   return (
@@ -55,7 +57,10 @@ export function TopBar({ breadcrumb = 'Case overview', showPosterior = true }: P
     >
       <div className="flex items-baseline gap-2 min-w-0">
         <div className="label-caps flex-none">{breadcrumb}</div>
-        <div className="font-serif text-ink truncate" style={{ fontSize: 24 }}>
+        <div
+          className={`font-serif truncate ${isPlaceholder ? "italic text-ink3" : "text-ink"}`}
+          style={{ fontSize: 24 }}
+        >
           {reference}
         </div>
         {courtLine && (
@@ -90,7 +95,7 @@ export function TopBar({ breadcrumb = 'Case overview', showPosterior = true }: P
 
 
 function composeCourtLine(profile: CaseProfile | null): string | null {
-  if (!profile) return 'ONSC · Toronto';
+  if (!profile) return null;
   const parts: string[] = [];
   if (profile.court)        parts.push(profile.court);
   if (profile.jurisdiction) parts.push(profile.jurisdiction);

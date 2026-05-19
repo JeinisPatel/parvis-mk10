@@ -55,16 +55,16 @@ export interface CaseProfile {
 }
 
 export const DEFAULT_PROFILE: CaseProfile = {
-  caseReference:        'R v Akwasi',
+  caseReference:        '',
   givenName:            '',
-  familyName:           'Akwasi',
+  familyName:           '',
   dateOfBirth:          '',
   pronouns:             '',
 
   indigenousIdentity:   'none',
   nationCommunity:      '',
   placeOfOrigin:        '',
-  currentResidence:     'Toronto, ON',
+  currentResidence:     '',
 
   fasdDiagnosis:        false,
   cognitiveAssess:      false,
@@ -76,8 +76,8 @@ export const DEFAULT_PROFILE: CaseProfile = {
   crownPosition:        '',
   defencePosition:      '',
 
-  jurisdiction:         'Ontario',
-  court:                'ONSC',
+  jurisdiction:         '',
+  court:                '',
   courthouse:           '',
   presidingJudge:       '',
   hearingDate:          '',
