@@ -64,16 +64,16 @@ PHASES: tuple[PhaseSpec, ...] = (
         key="identity",
         label="Identity & charge",
         purpose=(
-            "Establish who the offender is and what they are charged with. "
+            "Establish who the client is and what they are charged with. "
             "Foundation for everything else."
         ),
         opening_question=(
-            "Let's start with the basics. Who is the offender, and what are "
+            "Let's start with the basics. Who is the client, and what are "
             "they charged with? Include their age, jurisdiction, and the "
             "section of the Criminal Code if you have it."
         ),
         fields=(
-            FieldSpec("name",             "Name"),
+            FieldSpec("name",             "Client name"),
             FieldSpec("age",              "Age"),
             FieldSpec("jurisdiction",     "Province / territory"),
             FieldSpec("proposed_offence", "Proposed or index offence"),
@@ -91,7 +91,7 @@ PHASES: tuple[PhaseSpec, ...] = (
             "Maps to N10 (intergenerational trauma) and N12 (Gladue misapplication)."
         ),
         opening_question=(
-            "Is the offender Indigenous? If so, can you tell me about their "
+            "Is the client Indigenous? If so, can you tell me about their "
             "Nation, community, and any intergenerational factors — "
             "residential school exposure in the family, dislocation, "
             "child welfare involvement, addiction patterns?"
@@ -122,7 +122,7 @@ PHASES: tuple[PhaseSpec, ...] = (
             "shape of the pattern. Maps to N2 (violent history)."
         ),
         opening_question=(
-            "Tell me about the offender's criminal history. Roughly how many "
+            "Tell me about the client's criminal history. Roughly how many "
             "prior convictions, what kinds of offences, when did they happen, "
             "and is there a pattern — escalating, stable, de-escalating?"
         ),
@@ -147,10 +147,10 @@ PHASES: tuple[PhaseSpec, ...] = (
             "Map known assessments. Critically: capture *whether* tools were "
             "used and what they said, NOT validate them. The Ewert concern "
             "(N5 invalid risk tools) requires us to know what's in the file "
-            "so the validity of cross-cultural application can be evaluated."
+            "so we can challenge inappropriate cross-cultural use."
         ),
         opening_question=(
-            "What psychological or risk assessments has the offender had? "
+            "What psychological or risk assessments has the client had? "
             "PCL-R, Static-99R, VRAG, FASD assessments, anything else? "
             "I want to know what was administered, not whether it was valid."
         ),
@@ -199,12 +199,12 @@ PHASES: tuple[PhaseSpec, ...] = (
         key="systemic_context",
         label="Systemic context (Morris / Ellis)",
         purpose=(
-            "Capture systemic factors relevant to a Morris-Ellis social-context-"
-            "evidence (SCE) analysis. Over-policing (N14 / Le), community "
+            "Capture systemic factors that ground a Morris-Ellis social-context-"
+            "evidence (SCE) submission. Over-policing (N14 / Le), community "
             "deprivation, gaming risk (N13)."
         ),
         opening_question=(
-            "Finally, the systemic context. Is the offender from an "
+            "Finally, the systemic context. Is the client from an "
             "over-policed community? Are there Morris-Ellis grounds — "
             "racial profiling, neighbourhood enforcement disparities, "
             "carceral patterns in the community?"
