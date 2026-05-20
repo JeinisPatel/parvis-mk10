@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { analyseRecord, type Conviction, type RecordAnalysisResponse } from '@/lib/api';
+import { useEvidenceStore } from '@/lib/state/evidence';
 
 /**
  * Criminal record state — list of convictions persisted to localStorage,
@@ -120,35 +121,29 @@ export function readRecordSync(): Conviction[] {
 
 
 /**
- * Push the record's strong doctrinal implications into the Risk & distortions
- * evidence state. This is the explicit "apply to evidence" bridge.
+ * Push the record's strong doctrinal implications into the global evidence
+ * store. This is the explicit "apply to evidence" bridge.
  *
- * Reads the current evidence (stored under the Risk & distortions key by
- * useEvidence) and overlays nodes flagged as 'strong' in the analysis with
- * a "present, high confidence" entry. Advisory implications are not auto-
- * applied — the practitioner must reach the Risk & distortions screen to
- * engage them deliberately.
+ * Only 'strong'-typed implications are auto-applied — these are the cases
+ * where the doctrinal anchor is robust enough that one click is appropriate.
+ * Advisory implications require the practitioner to engage them deliberately
+ * on the Risk & distortions screen, preserving the separation between what
+ * the data implies and what the practitioner has accepted as evidence.
+ *
+ * Calls useEvidenceStore.getState().bulkApply() directly — works outside
+ * React components because Zustand stores expose a getState() API. All
+ * subscribers (useEvidence, Case Overview, Risk & distortions) re-render
+ * and soft inference re-runs automatically via the debounced effect.
  */
-export function applyRecordToEvidence(implications: { node: string; type: string }[]): void {
-  if (typeof window === 'undefined') return;
-  const EVIDENCE_KEY = 'parvis.mk9.evidence';  // matches useEvidence's storage convention
-
-  let current: Record<string, { value: 0 | 1; slider: number }> = {};
-  try {
-    const raw = window.localStorage.getItem(EVIDENCE_KEY);
-    if (raw) current = JSON.parse(raw);
-  } catch { /* silent */ }
-
+export function applyRecordToEvidence(
+  implications: { node: string; type: string }[],
+): void {
+  const entries: Record<string, { value: 0 | 1; slider: number }> = {};
   for (const imp of implications) {
     if (imp.type === 'strong') {
-      current[imp.node] = { value: 1, slider: 0.85 };
+      entries[imp.node] = { value: 1, slider: 0.85 };
     }
   }
-
-  try {
-    window.localStorage.setItem(EVIDENCE_KEY, JSON.stringify(current));
-    // Notify subscribers in this tab — useEvidence polls localStorage but
-    // dispatching the storage event also triggers cross-tab updates.
-    window.dispatchEvent(new StorageEvent('storage', { key: EVIDENCE_KEY }));
-  } catch { /* silent */ }
+  if (Object.keys(entries).length === 0) return;
+  useEvidenceStore.getState().bulkApply(entries);
 }
