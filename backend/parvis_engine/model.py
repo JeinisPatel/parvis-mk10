@@ -751,6 +751,20 @@ def compute_do_risk(posteriors: dict, collider_discount: bool = False) -> float:
         0.30, 1.0
     ))
 
+    # Steele (2014 SCC 61, §§38-39) precondition: this runs at the DESIGNATION
+    # stage and presumes the SPIO gate (s.752(a)) is already satisfied. SPIO is a
+    # *binary* precondition, not a node — "any level of violence" suffices there —
+    # and must NOT be re-imported as a seriousness threshold into the logic below.
+    #
+    # Boutilier (2017 SCC 64, §45) treatment gate: treatment-failure / elevated
+    # dynamic risk must not read as intractability unless culturally adequate
+    # treatment was available. N9 gates N4 — mirroring tool_validity on N3.
+    # k=0.45 (JP-confirmed, mirrors tool_validity); floor 0.30.
+    treatment_gate = float(np.clip(
+        1.0 - 0.45 * p.get(9, 0.5),
+        0.30, 1.0
+    ))
+
     # Raw risk: substantive risk nodes (N2, N3, N4) with appropriate discounts.
     # Per §5.1.18 §6 + Q6=A: N18 (SCE Profile audit) routes through
     # record_reliability (above) — old direct contribution at 0.25 weight in
@@ -760,7 +774,7 @@ def compute_do_risk(posteriors: dict, collider_discount: bool = False) -> float:
     raw = (
         0.30 * p.get(2, 0.5) * record_reliability +    # N2: discounted by record reliability
         0.25 * p.get(3, 0.5) * tool_validity +         # N3: discounted by Ewert (N5)
-        0.20 * p.get(4, 0.5)                           # N4 dynamic risk
+        0.20 * p.get(4, 0.5) * treatment_gate          # N4: gated by cultural-treatment adequacy (Boutilier)
         # N18 EXCLUDED from raw — contributes via record_reliability per §5.1.18 §6
     )
 
@@ -782,7 +796,9 @@ def compute_do_risk(posteriors: dict, collider_discount: bool = False) -> float:
         0.18 * posteriors.get(5, 0.5) +    # N5  invalid risk tools
         0.12 * posteriors.get(6, 0.5) +    # N6  IAC
         0.08 * posteriors.get(7, 0.5) +    # N7  bail-WCGP cascade
-        0.05 * posteriors.get(9, 0.5) +    # N9  IGT/treatment (mitigation)
+        # N9 EXCLUDED from dst — risk-attenuation now flows through the
+        # Boutilier treatment_gate on N4 (above); retaining 0.05*N9 here
+        # would double-count N9's mitigation (JP-confirmed double-count knob).
         0.25 * posteriors.get(10, 0.5) +   # N10 SCE misapplication (+0.02 from N14)
         0.05 * posteriors.get(12, 0.5) +   # N12 judging-the-judge
         0.19 * posteriors.get(13, 0.5) +   # N13 TraceRoute (+0.04 from N14)
@@ -804,6 +820,16 @@ def compute_do_risk(posteriors: dict, collider_discount: bool = False) -> float:
     raw = raw * burnout_mult
 
     final_risk = float(np.clip(raw * (1.0 - 0.68 * dst) + 0.03, 0.05, 0.93))
+
+    # Pattern-is-not-threat invariant (s.753(1)(a)(i)-(ii) + Steele §§38-39): a
+    # behavioural *pattern* (N2) cannot, standing alone, establish the *threat* to
+    # life/safety the designation requires. When N2 is the sole elevated risk
+    # signal — direct dynamic/actuarial evidence (N3, N4) not jointly supportive —
+    # the posterior is capped below the threat band. Thresholds JP-settable.
+    PATTERN_ONLY_CAP = 0.58   # top of Mark 10 'equivocal' band
+    _n2, _n3, _n4 = p.get(2, 0.5), p.get(3, 0.5), p.get(4, 0.5)
+    if _n2 >= 0.65 and _n3 < 0.55 and _n4 < 0.55:
+        final_risk = min(final_risk, PATTERN_ONLY_CAP)
 
     # ── §5.1.19 N19 collider-bias discount (Q4=C secondary) ─────────────────
     # Per §5.1.19 §1 + §8: when caller invokes collider_discount=True,
