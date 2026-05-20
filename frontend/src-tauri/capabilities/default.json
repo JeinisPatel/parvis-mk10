@@ -6,6 +6,16 @@
     "main"
   ],
   "permissions": [
-    "core:default"
+    "core:default",
+    {
+      "identifier": "shell:allow-execute",
+      "allow": [
+        {
+          "name": "binaries/parvis-backend",
+          "sidecar": true,
+          "args": []
+        }
+      ]
+    }
   ]
 }

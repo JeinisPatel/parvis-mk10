@@ -1,7 +1,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { runInference, checkHealth } from '@/lib/api';
+import { checkHealth } from '@/lib/api';
+import { useEvidence } from '@/lib/hooks/useEvidence';
 import { TopBar } from '@/components/TopBar';
 import { PosteriorBadge } from '@/components/PosteriorBadge';
 import { NODES } from '@/lib/nodes';
@@ -15,39 +16,22 @@ import { Glyph, ICON } from '@/components/Glyph';
 /**
  * Overview (Home) — first ported screen of Mark 9.
  *
- * Replaces today's Summary tab. Lands the case at a glance:
- *   - Headline pill (engine status + last-VE timestamp)
- *   - Posterior badge (large) — live from /api/v1/inference
- *   - "Drivers up / down" — top-5 risk-side and mitigation-side nodes
- *     derived from the live posterior distribution
- *   - Headline stats — doctrinal frame, completeness, network size
- *   - "What's next" — three suggested actions
- *
- * The TopBar renders WITHOUT its compact PosteriorBadge on this screen
- * (showPosterior={false}) because the page body already renders the large
- * one — showing both on the same screen is redundant.
- *
- * Phase A.2 swaps DEMO_EVIDENCE for the real case object pulled from
- * Supabase. For now we use the same anonymised demo evidence as the
- * design mockup so the screen has visible content end-to-end.
+ * Mk 9 fix: this screen used to compute its posterior from a local
+ * DEMO_EVIDENCE constant via its own useQuery call, which meant any
+ * evidence the practitioner entered elsewhere (Risk & distortions,
+ * Gladue, SCE, criminal record) was invisible here. The Case Overview
+ * now reads the live posterior from useEvidence(), which is backed by
+ * the global Zustand store at lib/state/evidence.ts. Whatever the user
+ * has toggled anywhere in the app is reflected here in real time.
  */
 
-// Demo evidence — anonymised case used in the redesign mocks.
-// Phase A.2 replaces this with `useCaseEvidence(caseId)`.
-const DEMO_EVIDENCE: Record<string, 0 | 1> = {
-  '5':  1,  // Risk tools — VRAG flagged invalid (Ewert)
-  '6':  1,  // IAC
-  '7':  1,  // Bail-WCGP cascade
-  '8':  1,  // FASD
-  '9':  1,  // IGT / cultural treatment
-  '17': 1,  // Over-policing
-};
-
 export default function OverviewPage() {
-  const inference = useQuery({
-    queryKey: ['posterior', 'demo-case'],
-    queryFn: () => runInference({ evidence: DEMO_EVIDENCE }),
-  });
+  // Live posterior from the shared evidence store. The query key
+  // ['posterior', 'current'] is the canonical 'what posterior does
+  // the case currently have' channel — TopBar and LivePosteriorRail
+  // read from the same key.
+  const { inference: data, isLoading, error } = useEvidence();
+  const inference = { data, isLoading, error };
 
   const health = useQuery({
     queryKey: ['health'],
@@ -110,8 +94,6 @@ interface BodyProps {
 }
 
 function OverviewBody({ posterior, posteriors, completeness, engineKind }: BodyProps) {
-  // Top movers — split into risk-side (push designation up) and
-  // mitigation-side (pull it down). Orders by posterior magnitude.
   const moversUp   = topMovers(posteriors, ['risk', 'distortion'], 5);
   const moversDown = topMovers(posteriors, ['mitigation', 'special', 'dual'], 5);
 
@@ -119,13 +101,11 @@ function OverviewBody({ posterior, posteriors, completeness, engineKind }: BodyP
 
   return (
     <>
-      {/* Headline */}
       <div
         className="grid pb-6 border-b border-border"
         style={{ gridTemplateColumns: '1.4fr 1fr', gap: 32 }}
       >
         <div>
-          {/* Status pill — colour reflects whether stub or real engine is serving */}
           <div
             className="inline-flex items-center gap-2 font-mono font-bold tracking-caps uppercase rounded-full mb-3.5"
             style={{
@@ -179,7 +159,6 @@ function OverviewBody({ posterior, posteriors, completeness, engineKind }: BodyP
         </div>
       </div>
 
-      {/* Drivers */}
       <div
         className="grid mt-6"
         style={{ gridTemplateColumns: '1fr 1fr', gap: 36 }}
@@ -198,7 +177,6 @@ function OverviewBody({ posterior, posteriors, completeness, engineKind }: BodyP
         />
       </div>
 
-      {/* What's next */}
       <div
         className="mt-7 rounded-xl border border-border bg-paper2"
         style={{ padding: '18px 22px' }}

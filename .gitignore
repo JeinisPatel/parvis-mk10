@@ -44,3 +44,10 @@ backend/data/uploads/
 backend/data/cases/
 *.apikey
 secrets.json
+
+# PyInstaller outputs (Phase 3)
+backend/dist/
+backend/build/
+
+# Tauri sidecar binaries (rebuilt per-platform via PyInstaller)
+frontend/src-tauri/binaries/
