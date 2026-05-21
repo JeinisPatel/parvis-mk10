@@ -51,3 +51,4 @@ backend/build/
 
 # Tauri sidecar binaries (rebuilt per-platform via PyInstaller)
 frontend/src-tauri/binaries/
+*.bak
