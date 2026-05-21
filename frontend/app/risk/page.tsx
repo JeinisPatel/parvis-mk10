@@ -126,7 +126,7 @@ export default function RiskDistortionsPage() {
               reset to demo
             </button>
             <span className="text-ink4 font-mono" style={{ fontSize: 11 }}>
-              {Object.keys(evidence).length} of 14 evidence nodes observed
+              {Object.keys(evidence).length} of {Object.values(NODES).filter((n) => n.ev).length} evidence nodes observed
             </span>
             {isLoading && (
               <span
