@@ -181,7 +181,7 @@ def _classify_pattern(convictions: list[dict]) -> tuple[Pattern, str]:
         return (
             "escalating",
             f"Later convictions average {late_avg:.2f} seriousness vs {early_avg:.2f} earlier — "
-            "escalating pattern engages Boutilier dynamic-risk reasoning (N18).",
+            "escalating pattern engages Boutilier dynamic-risk reasoning (N4).",
         )
     if delta <= -0.15:
         return (
@@ -226,6 +226,7 @@ def _doctrinal_implications(convictions: list[dict], pattern: Pattern) -> list[d
         implications.append({
             "node":      "7",
             "node_name": "Bail-denial cascade",
+            "side":      "defence",
             "type":      "strong" if bail_denied_count >= 2 else "advisory",
             "note": (
                 f"{bail_denied_count} prior conviction(s) followed bail denial. "
@@ -241,6 +242,7 @@ def _doctrinal_implications(convictions: list[dict], pattern: Pattern) -> list[d
         implications.append({
             "node":      "6",
             "node_name": "Ineffective counsel",
+            "side":      "defence",
             "type":      "strong" if iac_count >= 2 else "advisory",
             "note": (
                 f"{iac_count} prior conviction(s) where counsel was flagged as inadequate. "
@@ -250,12 +252,13 @@ def _doctrinal_implications(convictions: list[dict], pattern: Pattern) -> list[d
             "anchor":    "R v G.D.B. 2000 SCC 22",
         })
 
-    # ── N14 Over-policing ─────────────────────────────────────────────────────
+    # ── N17 Over-policing ─────────────────────────────────────────────────────
     overpoliced_count = sum(1 for c in convictions if c.get("overpoliced_jurisdiction"))
     if overpoliced_count >= 1:
         implications.append({
-            "node":      "14",
+            "node":      "17",
             "node_name": "Over-policing & epistemic contamination",
+            "side":      "defence",
             "type":      "strong" if overpoliced_count >= 2 else "advisory",
             "note": (
                 f"{overpoliced_count} conviction(s) in jurisdictions with documented "
@@ -265,7 +268,7 @@ def _doctrinal_implications(convictions: list[dict], pattern: Pattern) -> list[d
             "anchor":    "R v Le 2019 SCC 34",
         })
 
-    # ── N15 Temporal distortion ──────────────────────────────────────────────
+    # ── N14 Temporal distortion ──────────────────────────────────────────────
     current_year = date.today().year
     old_convictions = [
         c for c in convictions
@@ -273,8 +276,9 @@ def _doctrinal_implications(convictions: list[dict], pattern: Pattern) -> list[d
     ]
     if len(old_convictions) >= 1:
         implications.append({
-            "node":      "15",
+            "node":      "14",
             "node_name": "Temporal distortion",
+            "side":      "defence",
             "type":      "strong" if len(old_convictions) >= 2 else "advisory",
             "note": (
                 f"{len(old_convictions)} conviction(s) more than 15 years old. "
@@ -284,11 +288,12 @@ def _doctrinal_implications(convictions: list[dict], pattern: Pattern) -> list[d
             "anchor":    "R v Friesen 2020 SCC 9",
         })
 
-    # ── N18 Dynamic risk (engaged by escalation pattern) ─────────────────────
+    # ── N4 Dynamic risk (engaged by escalation pattern) ─────────────────────
     if pattern == "escalating":
         implications.append({
-            "node":      "18",
-            "node_name": "Dynamic risk factors",
+            "node":      "4",
+            "node_name": "Dynamic Risk Factor Cluster",
+            "side":      "defence",
             "type":      "advisory",
             "note": (
                 "Escalating pattern engages dynamic-risk reasoning under Boutilier. "
@@ -298,11 +303,12 @@ def _doctrinal_implications(convictions: list[dict], pattern: Pattern) -> list[d
             "anchor":    "R v Boutilier 2017 SCC 64",
         })
 
-    # ── N10 Intergenerational trauma (advisory if desistance + early convictions) ──
+    # ── N9 Intergenerational trauma (advisory if desistance + early convictions) ──
     if pattern == "desistance":
         implications.append({
-            "node":      "10",
+            "node":      "9",
             "node_name": "Intergenerational trauma (mitigation)",
+            "side":      "defence",
             "type":      "advisory",
             "note": (
                 "Desistance pattern is mitigation-relevant. Consider whether "
@@ -311,11 +317,12 @@ def _doctrinal_implications(convictions: list[dict], pattern: Pattern) -> list[d
             "anchor":    "R v Ipeelee 2012 SCC 13 §74",
         })
 
-    # ── N17 Collider bias (advisory if record is dense but recent is mitigated) ──
+    # ── N19 Collider bias (advisory if record is dense but recent is mitigated) ──
     if pattern == "de_escalating" and len(convictions) >= 4:
         implications.append({
-            "node":      "17",
+            "node":      "19",
             "node_name": "Collider bias",
+            "side":      "defence",
             "type":      "advisory",
             "note": (
                 "Dense early record with de-escalation invites a collider-bias reading: "
@@ -323,6 +330,81 @@ def _doctrinal_implications(convictions: list[dict], pattern: Pattern) -> list[d
                 "offender's life rather than their overall trajectory."
             ),
             "anchor":    "Patel (2026) Ch.5 §5.1.19 §8",
+        })
+
+    # ── N2 SPIO predicate (s.752(a) gate) [CROWN] ────────────────────────────
+    spio_count = sum(1 for c in convictions
+                     if OFFENCE_CATEGORIES.get(c.get("category"), {}).get("boutilier_eligible"))
+    if spio_count >= 1:
+        implications.append({
+            "node":      "2",
+            "node_name": "Violent history (SPIO predicate)",
+            "type":      "strong" if spio_count >= 2 else "advisory",
+            "side":      "crown",
+            "note": (
+                f"{spio_count} conviction(s) qualify as serious personal injury offences, "
+                "engaging the s.752(a) predicate for a dangerous-offender application. "
+                "Per Steele this is a binary precondition satisfied by any qualifying "
+                "violence; it does not by itself establish the pattern or the threat."
+            ),
+            "anchor":    "R v Steele 2014 SCC 61; Criminal Code s.752",
+        })
+
+    # ── N2 Repetitive violent pattern (s.753(1)(a)(i)) [CROWN] ───────────────
+    violent_elig = [c for c in convictions
+                    if OFFENCE_CATEGORIES.get(c.get("category"), {}).get("violent")
+                    and OFFENCE_CATEGORIES.get(c.get("category"), {}).get("boutilier_eligible")]
+    if pattern == "escalating" or len(violent_elig) >= 2:
+        implications.append({
+            "node":      "2",
+            "node_name": "Violent history (pattern)",
+            "type":      "strong" if (pattern == "escalating" and len(violent_elig) >= 2) else "advisory",
+            "side":      "crown",
+            "note": (
+                "The record supports a pattern of repetitive violent behaviour under "
+                "s.753(1)(a)(i), from which the Crown may argue a failure to restrain. "
+                "A pattern alone cannot establish the statutory threat: the likelihood-"
+                "of-harm prong requires corroborating dynamic-risk evidence (N4), and the "
+                "audit caps a pattern-only inference below the threat band."
+            ),
+            "anchor":    "Criminal Code s.753(1)(a)(i); R v Boutilier 2017 SCC 64",
+        })
+
+    # ── N3 Failure to control sexual impulses (s.753(1)(b)) [CROWN] ──────────
+    sexual_convs = [c for c in convictions
+                    if OFFENCE_CATEGORIES.get(c.get("category"), {}).get("sexual")]
+    if len(sexual_convs) >= 1:
+        implications.append({
+            "node":      "3",
+            "node_name": "Sexual offence profile",
+            "type":      "strong" if len(sexual_convs) >= 2 else "advisory",
+            "side":      "crown",
+            "note": (
+                f"{len(sexual_convs)} sexual offence conviction(s). The Crown may invoke "
+                "s.753(1)(b): a likelihood of causing injury through failure to control "
+                "sexual impulses. This leans on the actuarial pathway (N3/N4); under Ewert "
+                "the inference holds only where the instrument is validated for the "
+                "offender's population."
+            ),
+            "anchor":    "Criminal Code s.753(1)(b); Ewert v Canada 2018 SCC 30",
+        })
+
+    # ── N2 Brutal conduct (s.753(1)(a)(iii)) [CROWN] ─────────────────────────
+    brutal_convs = [c for c in convictions if c.get("brutal")]
+    if len(brutal_convs) >= 1:
+        implications.append({
+            "node":      "2",
+            "node_name": "Violent history (brutality)",
+            "type":      "strong",
+            "side":      "crown",
+            "note": (
+                f"{len(brutal_convs)} conviction(s) involve conduct flagged as brutal. "
+                "The Crown may invoke s.753(1)(a)(iii): behaviour so brutal as to compel "
+                "the conclusion that future conduct is unlikely to be inhibited by normal "
+                "standards of restraint. Brutality is assessed on the individual facts of "
+                "each offence, whether current or historical."
+            ),
+            "anchor":    "Criminal Code s.753(1)(a)(iii)",
         })
 
     return implications
