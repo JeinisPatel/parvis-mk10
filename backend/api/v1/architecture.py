@@ -36,6 +36,7 @@ class NodeOut(BaseModel):
     short:             str
     type:              str
     evidence_bearing:  bool
+    rationale:         str = ""
 
 
 class EdgeOut(BaseModel):
@@ -77,6 +78,7 @@ async def get_architecture() -> ArchitectureResponse:
             short=meta["short"],
             type=meta["type"],
             evidence_bearing=meta.get("ev", False),
+            rationale=meta.get("rationale", ""),
         )
         for nid, meta in engine.NODE_META.items()
     ]

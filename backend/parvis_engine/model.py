@@ -185,7 +185,8 @@ NODE_META = {
     "18c": {"name": "SCE substance",                              "short": "SCE substance",         "type": "distortion", "ev": True},
     "18d": {"name": "Doctrinal tagging compliance",               "short": "Doctrinal tagging",     "type": "distortion", "ev": True},
     # ── Structural Output (CH5 iii) ──────────────────────────────────────────
-    20: {"name": "Dangerous offender designation",                "short": "DO designation",        "type": "output",     "ev": False},
+    20: {"name": "Dangerous offender designation",                "short": "DO designation",        "type": "output",     "ev": False,
+         "rationale": "The designation-risk posterior. It aggregates the substantive risk nodes — pattern (N2), sexual-offence profile (N3), dynamic risk (N4) — each discounted by a doctrinally grounded gate. Record provenance discounts the pattern: IAC (N6, G.D.B.), bail-driven wrongful pleas (N7, Antic), over-policing (N17, Le), temporal distortion (N14, Friesen), the SCE audit (N18, Morris/Ellis), and past or present judicial bias and Gladue error (N12, Gladue/Ipeelee; Ewert). Tool validity (Ewert) discounts N3 and N4; treatment adequacy (Boutilier para 45) gates N4 so treatment failure cannot read as intractability absent culturally adequate treatment. A pattern-is-not-threat clamp stops the pattern alone from carrying a s.753(1)(a) threat finding (Steele paras 38-39); an optional collider discount (N19) accounts for surveillance-driven records. SPIO (s.752(a)) is presumed satisfied as a binary precondition. Output is a Lifchus-grounded qualitative band, not a decimal. Priors are elicited normative commitments, not empirical frequencies — the node audits the inference, it does not predict."},
 }
 
 
