@@ -280,9 +280,63 @@ def _call_gemini(
     history:        list[ChatMessage],
     user_message:   str,
 ) -> str:
-    # Stub: Mk 8 supports Gemini but the SDK call differs. For now we
-    # return a clear error so the UI can show "Gemini not yet wired".
-    raise RuntimeError("Gemini provider not yet wired in intake_chat")
+    try:
+        from google import genai
+        from google.genai import types
+    except ImportError:
+        raise RuntimeError(
+            "google-genai package not installed (pip install google-genai)"
+        )
+    client = genai.Client(api_key=api_key)
+
+    # Gemini takes a single ordered list of {role, parts}; the system prompt
+    # is passed via config, not as a message. Map our roles: 'assistant' ->
+    # 'model', 'user' -> 'user'. Mirror the OpenAI/Anthropic shape so the
+    # downstream JSON parser sees the same contract from every provider.
+    contents = []
+    for m in history:
+        if m.role == "user":
+            contents.append({"role": "user", "parts": [{"text": m.content}]})
+        elif m.role == "assistant":
+            contents.append({"role": "model", "parts": [{"text": m.content}]})
+    contents.append({"role": "user", "parts": [{"text": user_message}]})
+
+    # response_mime_type=application/json is Gemini's analogue of OpenAI's
+    # json_object mode; response_schema enforces the same shape Anthropic's
+    # forced tool call produces.
+    response_schema = {
+        "type": "object",
+        "properties": {
+            "message":     {"type": "string"},
+            "extracted":   {"type": "object"},
+            "suggestions": {
+                "type": "array",
+                "items": {
+                    "type": "object",
+                    "properties": {
+                        "field":      {"type": "string"},
+                        "value":      {"type": "string"},
+                        "confidence": {"type": "number"},
+                        "rationale":  {"type": "string"},
+                    },
+                    "required": ["field"],
+                },
+            },
+        },
+        "required": ["message"],
+    }
+
+    response = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=contents,
+        config=types.GenerateContentConfig(
+            system_instruction=system_prompt,
+            max_output_tokens=4000,
+            response_mime_type="application/json",
+            response_schema=response_schema,
+        ),
+    )
+    return (response.text or "").strip()
 
 
 # ── JSON-from-LLM parser ─────────────────────────────────────────────────────
