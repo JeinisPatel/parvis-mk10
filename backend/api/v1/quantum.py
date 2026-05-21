@@ -195,17 +195,13 @@ async def run_quantum(req: QuantumRequest, request: Request) -> QuantumResponse:
             detail=f"bloch_sphere.py not available: {e}",
         )
 
-    risk_weight = sum(
-        posteriors_int.get(n, 0.0) for n in (2, 3, 4, 18)
-    ) / 4.0
-    mitigation_weight = sum(
-        posteriors_int.get(n, 0.0) for n in (9, 10)
-    ) / 2.0
+    # Azimuth (φ) is driven by the DIRECTION of frame-disagreement, read from the
+    # order-stability diagnostic (single source of truth — no node bucketing here).
+    frame_bias = float(diags.get("order_stability", {}).get("frame_bias", 0.0) or 0.0)
 
     theta, phi, x, y, z = compute_bloch_angles(
         p_high=do_risk,
-        risk_weight=risk_weight,
-        mitigation_weight=mitigation_weight,
+        frame_bias=frame_bias,
     )
 
     return QuantumResponse(

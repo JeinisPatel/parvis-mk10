@@ -213,11 +213,15 @@ def check_order_stability(
     base_n20 = float(base_results.get(20, 0.5))
 
     # Doctrinal classes of evidence (node-string keys in BN evidence dict)
-    risk_keys    = {"2", "3", "4", "18"}      # violent history, PCL-R, Static-99R, dynamic risk
-    distort_keys = {"5", "6", "12", "14", "17"}  # invalid tools, ineffective counsel, Gladue
-                                                   # misapp, intergenerational trauma, collider
+    # Canonical (Mk9 re-key) buckets. N18 is the SCE/Gladue profile audit, so it
+    # belongs in the SCE/context frame, NOT the risk frame.
+    risk_keys = {"2", "3", "4"}                       # validated risk elevators, sexual profile, dynamic risk
+    sce_keys  = {"5", "6", "9", "10", "12", "14", "17", "18"}  # tools/Ewert, IAC, IGT, SCE misapp,
+                                                              # judicial reliability, temporal, over-policing, SCE profile
 
     permutations = []
+    risk_first_posterior = None   # P(DO | risk-typed evidence only)
+    sce_first_posterior  = None   # P(DO | SCE-typed evidence only)
 
     # Permutation A — risk-only frame (record reviewed first, SCE not yet weighted)
     risk_only = {k: v for k, v in base_evidence.items() if k in risk_keys}
@@ -225,6 +229,7 @@ def check_order_stability(
         try:
             r = query_do_risk(engine, risk_only)
             n20_r = float(r.get(20, 0.5))
+            risk_first_posterior = n20_r
             permutations.append({
                 "label": "Risk-typed evidence only (pre-SCE frame)",
                 "posterior": round(n20_r, 4),
@@ -234,11 +239,12 @@ def check_order_stability(
             pass
 
     # Permutation B — distortion/contextual-only frame (SCE reviewed first)
-    distort_only = {k: v for k, v in base_evidence.items() if k in distort_keys}
+    distort_only = {k: v for k, v in base_evidence.items() if k in sce_keys}
     if distort_only:
         try:
             r = query_do_risk(engine, distort_only)
             n20_d = float(r.get(20, 0.5))
+            sce_first_posterior = n20_d
             permutations.append({
                 "label": "Distortion-typed evidence only (SCE-first frame)",
                 "posterior": round(n20_d, 4),
@@ -264,6 +270,9 @@ def check_order_stability(
             "flagged": False,
             "severity": "none",
             "delta": 0.0,
+            "frame_bias": 0.0,
+            "risk_first_posterior": None,
+            "sce_first_posterior": None,
             "permutations": [],
             "note": (
                 "Order-stability check could not be run — insufficient evidence "
@@ -303,10 +312,22 @@ def check_order_stability(
             f"under different evidence."
         )
 
+    # Signed direction of frame-disagreement (drives Bloch azimuth φ in the API).
+    # Positive: the risk-typed-only frame yields HIGHER designation risk than the
+    # SCE-typed-only frame (record read first inflates designation). The magnitude
+    # is reserved for the Mark 10 density-matrix coherence work.
+    if risk_first_posterior is not None and sce_first_posterior is not None:
+        frame_bias = round(risk_first_posterior - sce_first_posterior, 4)
+    else:
+        frame_bias = 0.0
+
     return {
         "flagged": flagged,
         "severity": severity,
         "delta": round(max_delta, 4),
+        "frame_bias": frame_bias,
+        "risk_first_posterior": risk_first_posterior,
+        "sce_first_posterior": sce_first_posterior,
         "permutations": permutations,
         "note": note,
     }

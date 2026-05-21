@@ -40,7 +40,7 @@ TYPE_COLORS = {
 }
 
 
-def compute_bloch_angles(p_high: float, risk_weight: float, mitigation_weight: float):
+def compute_bloch_angles(p_high: float, frame_bias: float = 0.0):
     """
     Convert classical posterior + risk/mitigation balance to Bloch sphere angles.
 
@@ -53,17 +53,24 @@ def compute_bloch_angles(p_high: float, risk_weight: float, mitigation_weight: f
     Returns
     -------
     theta : polar angle (0 = north, π = south)
-    phi   : azimuthal angle (0 = risk-dominant, π = mitigation-dominant)
+    phi   : azimuthal angle (0 = risk-first frame inflates, π = SCE-first frame inflates, π/2 = frames agree)
     x, y, z : Cartesian coordinates on unit sphere
     """
     # Polar angle: maps P(High) → θ
     # P=1 → θ=0 (north), P=0.5 → θ=π/2 (equator), P=0 → θ=π (south)
     theta = np.arccos(np.clip(2.0 * p_high - 1.0, -1, 1))
 
-    # Azimuthal: encodes narrative balance
-    # High mitigation weight → pushes toward φ=π (mitigation-dominant)
-    total = risk_weight + mitigation_weight + 1e-9
-    phi = np.pi * (mitigation_weight / total)
+    # Azimuthal: encodes the DIRECTION of frame-disagreement (Appendix Q §AQ.3.3.5.3).
+    # frame_bias = P(DO | risk-typed evidence only) − P(DO | SCE-typed evidence only),
+    # computed by check_order_stability(). It is a proxy for narrative-order anchoring,
+    # NOT a literal non-commutative reordering (VE is commutative; see that function).
+    #   frame_bias > 0  → risk-first frame inflates designation → φ toward 0  (risk side)
+    #   frame_bias < 0  → SCE-first frame inflates designation  → φ toward π  (SCE side)
+    #   frame_bias = 0  → frames agree                          → φ = π/2     (balanced)
+    # Gain π: a 0.5 divergence swings φ a full quarter-turn. Near a pole (resolved
+    # belief) sin(θ)≈0, so azimuth is naturally most expressive when belief is unresolved.
+    PHI_FRAME_GAIN = np.pi
+    phi = float(np.clip(np.pi / 2.0 - PHI_FRAME_GAIN * frame_bias, 0.0, np.pi))
 
     x = np.sin(theta) * np.cos(phi)
     y = np.sin(theta) * np.sin(phi)
@@ -120,7 +127,7 @@ def draw_bloch_sphere(
             color='#BA7517', linewidth=1.5, alpha=0.5, linestyle='--')
 
     # ── Quantum state vector ──────────────────────────────────────────────────
-    theta, phi, qx, qy, qz = compute_bloch_angles(p_high, risk_weight, mitigation_weight)
+    theta, phi, qx, qy, qz = compute_bloch_angles(p_high, frame_bias=0.0)
 
     # State vector arrow
     ax.quiver(0, 0, 0, qx, qy, qz,
