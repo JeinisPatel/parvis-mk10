@@ -91,6 +91,19 @@ across the LLM's cited authorities. Fully backward-compatible: callers
 that don't pass doc_jurisdiction get auto-detection; callers that don't
 read result['stare_decisis'] see no change.
 ─────────────────────────────────────────────────────────────────────────────────
+─────────────────────────────────────────────────────────────────────────────────
+MODEL RE-KEY — Mk 9 (May 2026)
+─────────────────────────────────────────────────────────────────────────────────
+NODE_DESCRIPTIONS, ANALYZER_NODE_IDS and doctrine.NODE_DOCTRINE were re-keyed
+to model.NODE_META's canonical numbering. The analyzer/doctrine layer had
+drifted onto an older numbering, so LLM-proposed deltas were applied by ID to
+the WRONG model nodes. Notable mappings: PCL-R folded into N2 (risk elevators);
+IGT + treatment + rehabilitation-progress consolidated into N9; tetrad
+misapplication -> N10; dynamic risk -> N4; over-policing -> N17; temporal -> N14;
+tariff -> N15; collider -> N19; and N18 (SCE/Gladue profile audit) is now sourced
+directly. EXPECTED_MODEL_NAMES + _verify_node_coverage() now compare node NAMES,
+not just ID presence, so this class of drift fails loudly on import.
+─────────────────────────────────────────────────────────────────────────────────
 """
 
 import json
@@ -195,29 +208,48 @@ def _parse_json_response(raw: str) -> dict:
 # To extend coverage (e.g. add nodes 16/17/19), add the ID here AND add a
 # description to NODE_DESCRIPTIONS. The prompt skeleton will adapt automatically.
 
-ANALYZER_NODE_IDS: Set[int] = {2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15,
-                               16, 17, 18, 19}
+ANALYZER_NODE_IDS: Set[int] = {2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 14, 15, 17, 18, 19}
 
 NODE_DESCRIPTIONS = {
-    2:  "Serious violence / violent history — primary aggravating factor for DO designation",
-    3:  "Psychopathy (PCL-R) — adversarial allegiance effects documented (Larsen 2024); cultural validity concerns (Ewert)",
-    4:  "Sexual offence profile / Static-99R — cultural validity concerns for Indigenous offenders (Ewert v Canada [2018])",
-    5:  "Culturally invalid risk tools — Static-99R, VRAG, LSI-R applied without cultural qualification",
+    2:  "Validated risk elevators — serious violence / violent history AND PCL-R psychopathy; primary aggravating elevators for DO designation. PCL-R subject to Ewert cultural-validity and adversarial-allegiance concerns (Larsen 2024)",
+    3:  "Sexual offence risk profile / Static-99R — cultural validity concerns for Indigenous offenders (Ewert v Canada [2018])",
+    4:  "Dynamic risk factor cluster — substance use, antisocial peers, housing instability (assess against structural context)",
+    5:  "Current risk assessment tools — culturally invalid / unqualified actuarial instruments (Static-99R, VRAG, LSI-R) applied without cultural validation (Ewert)",
     6:  "Ineffective assistance of counsel — failure to investigate Gladue/SCE factors",
-    7:  "Bail-denial → wrongful guilty plea cascade — pre-trial detention creates coercive plea incentives",
-    9:  "FASD — dual factor: mitigation reducing moral blameworthiness + treatment responsivity modulator",
-    10: "Intergenerational trauma — residential school legacy, forced displacement, cultural genocide (Gladue/Ipeelee)",
-    11: "Absence of culturally grounded treatment — systemic failure, not offender characteristic (Natomagan 2022 ABCA 48)",
-    12: "Judicial misapplication of Gladue tetrad — failure to apply Gladue, Morris, Ellis, or Ewert",
-    13: "Gaming risk detector — anomalously positive rehabilitation signals inconsistent with institutional record",
-    14: "Over-policing / epistemic contamination — record inflated by disproportionate surveillance",
-    15: "Temporal distortion — age-related burnout effect; prior convictions under repudiated mandatory minimums",
-    16: "Interjurisdictional tariff effects — provincial variance in sentencing norms produces DO designation disparity independent of offender risk (Lacasse [2015] SCC 64)",
-    17: "Collider bias — conditioning on incarceration (caused by both conduct and systemic factors) induces spurious correlations that inflate apparent risk (Pearl 2009)",
-    18: "Dynamic risk factors — substance use, antisocial peers, housing instability (assess against structural context)",
-    19: "Absence of rehabilitative progress — must be assessed against programming availability; structural absence ≠ offender refusal (Natomagan 2022 ABCA 48)",
+    7:  "Bail denial → wrongful conviction guilty plea cascade — pre-trial detention creates coercive plea incentives",
+    8:  "FASD as dual-factor — mitigation reducing moral blameworthiness AND treatment-responsivity modulator",
+    9:  "Intergenerational trauma & cultural treatment — residential school legacy, displacement, cultural genocide (Gladue/Ipeelee); includes absence of culturally grounded treatment and absence of rehabilitative progress as systemic, not offender, characteristics (Natomagan 2022 ABCA 48)",
+    10: "Judicial misapplication of SCE — failure to apply the Gladue/Morris/Ellis/Ewert tetrad",
+    11: "Gaming risk detector — anomalously positive rehabilitation signals inconsistent with institutional record",
+    14: "Temporal distortion in prior records — age-related burnout; prior convictions under repudiated mandatory minimums / superseded regimes",
+    15: "Interjurisdictional tariff distortion — provincial variance in sentencing norms produces DO designation disparity independent of offender risk (Lacasse [2015] SCC 64)",
+    17: "Over-policing & epistemic contamination — record inflated by disproportionate surveillance",
+    18: "Gladue / Ewert / Morris / Ellis profile — SCE profile audit: whether the profile was substantively engaged in the reasons (presence, substance, doctrinal tagging); feeds record_reliability",
+    19: "Collider bias — conditioning on incarceration (caused by both conduct and systemic factors) induces spurious risk correlations (Pearl 2009)",
 }
 
+
+# Canonical model node names (model.NODE_META["name"]) for each analyzer-covered
+# ID. This is the SEMANTIC contract: an analyzer ID must MEAN what the model
+# means by it. _verify_node_coverage() compares against this on import and warns
+# loudly on drift. Update ONLY in lockstep with model.NODE_META.
+EXPECTED_MODEL_NAMES = {
+    2:  "Validated risk elevators",
+    3:  "Sexual offence risk profile",
+    4:  "Dynamic risk factor cluster",
+    5:  "Current risk assessment tools",
+    6:  "Ineffective assistance of counsel",
+    7:  "Bail denial → wrongful conviction guilty plea",
+    8:  "FASD as dual-factor in risk modeling",
+    9:  "Intergenerational trauma & cultural treatment",
+    10: "Judicial misapplication of SCE",
+    11: "Gaming risk detector",
+    14: "Temporal distortion in prior records",
+    15: "Interjurisdictional tariff distortion",
+    17: "Over-policing & epistemic contamination",
+    18: "Gladue / Ewert / Morris / Ellis profile",
+    19: "Collider bias",
+}
 
 def _verify_node_coverage() -> None:
     """Soft-check that ANALYZER_NODE_IDS, NODE_DESCRIPTIONS, and the canonical
@@ -237,23 +269,35 @@ def _verify_node_coverage() -> None:
 
     # Cross-check with model.NODE_META (which nodes accept evidence)
     try:
-        from model import NODE_META
+        from parvis_engine.model import NODE_META
         meta_ev_ids = {nid for nid, meta in NODE_META.items() if meta.get("ev")}
         orphaned = ANALYZER_NODE_IDS - set(NODE_META.keys())
         if orphaned:
             log.warning("ANALYZER_NODE_IDS contains nodes absent from NODE_META: %s", sorted(orphaned))
-        # Nodes that NODE_META marks as evidence-accepting but the analyzer ignores
-        # are Path B territory, not a bug — report at INFO only.
+        # SEMANTIC tripwire (Mk9): an ID existing in both modules is NOT enough —
+        # it must MEAN the same thing. Compare each analyzer ID against the
+        # canonical model name. A mismatch means LLM-proposed deltas are being
+        # routed to the wrong node (the failure that went undetected pre-Mk9).
+        for _nid, _expected in EXPECTED_MODEL_NAMES.items():
+            _actual = (NODE_META.get(_nid) or {}).get("name")
+            if _actual is None:
+                log.warning("Node %s expected in NODE_META but absent.", _nid)
+            elif str(_actual).strip() != _expected.strip():
+                log.warning("NODE NAME DRIFT at N%s: analyzer expects %r but model.NODE_META "
+                            "says %r — deltas may be mis-routed; re-key required.",
+                            _nid, _expected, _actual)
+        # Nodes NODE_META marks evidence-accepting but the analyzer doesn't cover
+        # are deferred coverage, not a bug — report at INFO only.
         uncovered = meta_ev_ids - ANALYZER_NODE_IDS
         if uncovered:
             log.info("NODE_META evidence-accepting nodes not covered by analyzer "
-                     "(Path B candidates): %s", sorted(uncovered))
+                     "(deferred coverage): %s", sorted(uncovered))
     except Exception as e:
         log.info("Could not cross-check against model.NODE_META: %s", e)
 
     # Cross-check with doctrine.NODE_DOCTRINE
     try:
-        from doctrine import NODE_DOCTRINE
+        from parvis_engine.doctrine import NODE_DOCTRINE
         undocumented = ANALYZER_NODE_IDS - set(NODE_DOCTRINE.keys())
         if undocumented:
             log.warning("ANALYZER_NODE_IDS contains nodes absent from NODE_DOCTRINE: %s",
@@ -283,7 +327,7 @@ def _build_system_prompt(
     respect this classification rather than reason about hierarchy itself.
     """
     try:
-        from doctrine import build_doctrinal_prompt
+        from parvis_engine.doctrine import build_doctrinal_prompt
         doctrinal_section = build_doctrinal_prompt()
     except Exception as e:
         log.warning("doctrine.py unavailable (%s) — using static Tetrad fallback.", e)
@@ -323,7 +367,7 @@ def _build_stare_decisis_section(
     undetermined, returns a short note rather than failing.
     """
     try:
-        from stare_decisis import (
+        from parvis_engine.stare_decisis import (
             classify_authorities_for_prompt, BindingForce,
         )
     except Exception as e:
@@ -706,7 +750,7 @@ def analyze_document(
     detection = None
     if doc_jurisdiction is None or doc_level is None:
         try:
-            from stare_decisis import infer_document_jurisdiction
+            from parvis_engine.stare_decisis import infer_document_jurisdiction
             detection = infer_document_jurisdiction(content)
             if doc_jurisdiction is None:
                 doc_jurisdiction = detection.get("province")
@@ -779,7 +823,7 @@ def _build_stare_decisis_result(
 
     splits = []
     try:
-        from stare_decisis import detect_splits
+        from parvis_engine.stare_decisis import detect_splits
         splits = detect_splits(all_citations)
     except Exception as e:
         log.info("Split detection unavailable: %s", e)
