@@ -30,6 +30,7 @@ interface ArchNode {
   short:            string;
   type:             string;
   evidence_bearing: boolean;
+  rationale?:       string;
 }
 
 interface ArchEdge {
@@ -502,6 +503,17 @@ export default function NetworkPage() {
                       </span>
                     )}
                   </div>
+
+                  {selected.rationale && (
+                    <div className="mt-4">
+                      <h4 className="text-xs font-mono uppercase tracking-widest text-slate-500 mb-1.5">
+                        Rationale
+                      </h4>
+                      <p className="text-sm text-slate-600 leading-relaxed">
+                        {selected.rationale}
+                      </p>
+                    </div>
+                  )}
 
                   {parentsAndChildren.parents.length > 0 && (
                     <div className="mt-4">
