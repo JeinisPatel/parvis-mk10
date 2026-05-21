@@ -267,6 +267,7 @@ function BlochSphereCanvas({
     // ── Scene setup ────────────────────────────────────────────────────────
     const width  = mount.clientWidth;
     const height = 380;
+    let vw = width;  // current viewport width, kept fresh on resize for label projection
     const scene = new THREE.Scene();
     scene.background = null;
 
@@ -352,6 +353,45 @@ function BlochSphereCanvas({
     const currentArrow = makeArrow(0x1a1a18, 0.95);
     const previousArrow = makeArrow(0x1a1a18, 0.18);  // dimmed "before"
 
+    // ── On-sphere labels (HTML overlay projected from 3D anchors) ───────────
+    // Pole labels sit on the green P(DO) axis; the equatorial labels ride the
+    // spin and name what the azimuth now encodes — frame-disagreement
+    // direction (risk-first vs SCE-first), per the φ rewire.
+    const mkLabel = (text: string, color: string, weight = 500, mono = true) => {
+      const el = document.createElement('div');
+      el.textContent = text;
+      el.style.cssText =
+        'position:absolute;transform:translate(-50%,-50%);font-size:11px;' +
+        'white-space:nowrap;pointer-events:none;font-weight:' + weight + ';' +
+        'color:' + color + ';' +
+        (mono ? 'font-family:ui-monospace,SFMono-Regular,Menlo,monospace;' : '');
+      mount.appendChild(el);
+      return el;
+    };
+    const labelDO    = mkLabel('|DO⟩', '#2C2C2A');
+    const labelNoDO  = mkLabel('|no DO⟩', '#2C2C2A');
+    const labelRisk  = mkLabel('risk-first inflates', '#A32D2D');
+    const labelSce   = mkLabel('SCE-first inflates', '#A32D2D');
+    const labelAgree = mkLabel('frames agree', '#534AB7', 400, false);
+    const labelTip   = mkLabel('', '#2C2C2A', 500, false);
+    const labelAnchors: { el: HTMLDivElement; v: THREE.Vector3 }[] = [
+      { el: labelDO,    v: new THREE.Vector3(0,  1.22, 0) },
+      { el: labelNoDO,  v: new THREE.Vector3(0, -1.22, 0) },
+      { el: labelRisk,  v: new THREE.Vector3( 1.22, 0, 0) },
+      { el: labelSce,   v: new THREE.Vector3(-1.22, 0, 0) },
+      { el: labelAgree, v: new THREE.Vector3(0, 0, -1.22) },
+    ];
+    const projV = new THREE.Vector3();
+    const tipLocal = new THREE.Vector3();
+    const projectLabel = (el: HTMLDivElement, local: THREE.Vector3) => {
+      projV.copy(local).applyEuler(scene.rotation);
+      const dist = projV.distanceTo(camera.position);
+      projV.project(camera);
+      el.style.left = ((projV.x * 0.5 + 0.5) * vw) + 'px';
+      el.style.top  = ((-projV.y * 0.5 + 0.5) * height) + 'px';
+      el.style.opacity = dist > 4.0 ? '0.3' : '1';
+    };
+
     // ── Mouse rotation ─────────────────────────────────────────────────────
     let yaw   = 0;
     let pitch = 0.2;
@@ -387,6 +427,7 @@ function BlochSphereCanvas({
     // ── Resize ─────────────────────────────────────────────────────────────
     const onResize = () => {
       const w = mount.clientWidth;
+      vw = w;
       renderer.setSize(w, height);
       camera.aspect = w / height;
       camera.updateProjectionMatrix();
@@ -426,10 +467,10 @@ function BlochSphereCanvas({
       // Re-orient scene from yaw/pitch (only when not auto-rotating).
 if (!dragging) auto += 0.006;
 // Rotate the entire scene — yaw is user-driven, auto is the gentle drift.
-// The auto term also gets a small sinusoidal x-axis nutation so the
-// rotation reads as motion rather than a frozen pose.
+// Spin is around the vertical (P(DO)) axis only, so the poles stay put and
+// the equatorial frame labels travel; pitch is held constant.
 scene.rotation.y = yaw + auto;
-scene.rotation.x = pitch + Math.sin(auto * 1.3) * 0.08;
+scene.rotation.x = pitch;
 
       // Position the arrows in scene-local coords.
       placeArrow(currentArrow, cur.x, cur.y, cur.z);
@@ -442,6 +483,12 @@ scene.rotation.x = pitch + Math.sin(auto * 1.3) * 0.08;
         );
       }
 
+      // Project the on-sphere labels each frame.
+      for (const a of labelAnchors) projectLabel(a.el, a.v);
+      tipLocal.set(cur.x, cur.z, -cur.y).multiplyScalar(1.2);
+      projectLabel(labelTip, tipLocal);
+      labelTip.textContent = 'P(DO) ' + Math.round(doRisk * 100) + '%';
+
       renderer.render(scene, camera);
       raf = requestAnimationFrame(renderFrame);
     };
@@ -449,6 +496,8 @@ scene.rotation.x = pitch + Math.sin(auto * 1.3) * 0.08;
 
     return () => {
       cancelAnimationFrame(raf);
+      for (const a of labelAnchors) a.el.remove();
+      labelTip.remove();
       mount.removeEventListener('pointerdown', onDown);
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onUp);
@@ -487,6 +536,7 @@ scene.rotation.x = pitch + Math.sin(auto * 1.3) * 0.08;
         style={{
           width: '100%',
           height: 380,
+          position: 'relative',
           touchAction: 'none',
         }}
       />
@@ -494,15 +544,15 @@ scene.rotation.x = pitch + Math.sin(auto * 1.3) * 0.08;
       <div className="mt-3 grid" style={{ gridTemplateColumns: '1fr 1fr 1fr', gap: 8, fontSize: 11 }}>
         <div className="flex items-center gap-1.5">
           <span style={{ width: 8, height: 8, background: '#A32D2D', borderRadius: 4 }} />
-          <span className="text-ink3">x · risk ↔ mitigation</span>
+          <span className="text-ink3">risk-first ↔ SCE-first</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span style={{ width: 8, height: 8, background: '#534AB7', borderRadius: 4 }} />
-          <span className="text-ink3">y · azimuth</span>
+          <span className="text-ink3">frames agree</span>
         </div>
         <div className="flex items-center gap-1.5">
           <span style={{ width: 8, height: 8, background: '#3B6D11', borderRadius: 4 }} />
-          <span className="text-ink3">z · P(DO=1) ↑</span>
+          <span className="text-ink3">P(DO designation) ↑</span>
         </div>
       </div>
 
