@@ -236,6 +236,23 @@ def _doctrinal_implications(convictions: list[dict], pattern: Pattern) -> list[d
             "anchor":    "R v Antic 2017 SCC 27",
         })
 
+    # ── N7 Plea entered under pressure (WCGP risk) [DEFENCE] ─────────────────
+    pressured = sum(1 for c in convictions if c.get("plea_under_pressure"))
+    if pressured >= 1:
+        implications.append({
+            "node":      "7",
+            "node_name": "Wrongful guilty plea (plea pressure)",
+            "type":      "strong" if pressured >= 2 else "advisory",
+            "side":      "defence",
+            "note": (
+                f"{pressured} conviction(s) where the guilty plea was entered under "
+                "pressure. A guilty plea must be voluntary under s.606(1.1); a pressured "
+                "plea may not reflect culpable conduct and weakens the reliability of the "
+                "conviction as evidence of a pattern."
+            ),
+            "anchor":    "Criminal Code s.606(1.1)",
+        })
+
     # ── N6 Ineffective counsel ───────────────────────────────────────────────
     iac_count = sum(1 for c in convictions if c.get("counsel_inadequate"))
     if iac_count >= 1:
