@@ -774,7 +774,7 @@ def compute_do_risk(posteriors: dict, collider_discount: bool = False) -> float:
     raw = (
         0.30 * p.get(2, 0.5) * record_reliability +    # N2: discounted by record reliability
         0.25 * p.get(3, 0.5) * tool_validity +         # N3: discounted by Ewert (N5)
-        0.20 * p.get(4, 0.5) * treatment_gate          # N4: gated by cultural-treatment adequacy (Boutilier)
+        0.20 * p.get(4, 0.5) * treatment_gate * tool_validity   # N4: gated by Boutilier (N9) AND Ewert tool-validity (N5)
         # N18 EXCLUDED from raw — contributes via record_reliability per §5.1.18 §6
     )
 
