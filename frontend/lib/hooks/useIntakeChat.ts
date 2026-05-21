@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
+import { API_BASE } from '@/lib/api';
 import { readApiKeySync } from '@/lib/hooks/useApiKey';
 import { readProfileSync } from '@/lib/hooks/useProfile';
 
@@ -161,7 +162,7 @@ export function useIntakeChat() {
         headers['X-Parvis-Api-Key']      = keyData.key;
         headers['X-Parvis-Api-Provider'] = keyData.provider;
       }
-      const res = await fetch('/api/v1/intake/turn', {
+      const res = await fetch(`${API_BASE}/api/v1/intake/turn`, {
         method:  'POST',
         headers,
         body: JSON.stringify({
