@@ -34,6 +34,7 @@ class Conviction(BaseModel):
     bail_denied:                bool = False
     counsel_inadequate:         bool = False
     overpoliced_jurisdiction:   bool = False
+    brutal:                     bool = False
     plea_under_pressure:        bool = False
 
     notes:                    str = ""
