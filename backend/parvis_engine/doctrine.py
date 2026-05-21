@@ -45,10 +45,9 @@ NODE_DOCTRINE = {
                   'psychopathy)',
      'function': 'Primary aggravating factor for DO pattern designation under s.753 Criminal Code. '
                  'Subject to Node 1 beyond-reasonable-doubt threshold and temporal attenuation '
-                 '(Node 14).  ||  PCL-R psychopathy is folded in here as a validated risk '
-                 'elevator: Encodes PCL-R-assessed psychopathy as a risk factor. Adversarial '
-                 'allegiance effects and cultural invalidity for Indigenous/racialized populations '
-                 'require qualification.',
+                 '(Node 14). This node also encodes PCL-R-assessed psychopathy as a validated risk '
+                 'elevator; adversarial allegiance effects and cultural invalidity for '
+                 'Indigenous/racialized populations require qualification.',
      'primary_auth': [{'citation': 'Criminal Code RSC 1985 c C-46, s 753(1)(a)(i)',
                        'para': 's.753(1)(a)(i)',
                        'principle': 'Designation requires a pattern of repetitive behaviour '
@@ -893,14 +892,14 @@ NODE_DOCTRINE = {
     9: {'node_name': 'Intergenerational trauma & cultural treatment (incl. treatment availability and '
                   'rehabilitative-progress context)',
      'function': 'Residential school legacy, forced displacement, cultural genocide and '
-                 'intergenerational impacts. Mandatory Gladue factor. Failure to document is '
-                 'reversible error.  ||  Cultural-treatment availability: Unavailability of '
-                 'Indigenous-specific rehabilitative programming. Absence is systemic failure, not '
-                 'offender characteristic. Cannot be used as evidence of untreatable risk per '
-                 'Natomagan.  ||  Rehabilitative progress: Apparent rehabilitation failure must be '
-                 'assessed against availability of programming. P(no progress | no programs) ≠ '
-                 'P(no progress | programs + refusal). Critical diagnostic distinction per '
-                 'Natomagan.',
+                 'intergenerational impacts; a mandatory Gladue factor whose omission is '
+                 'reversible error. This node also captures cultural-treatment availability: the '
+                 'unavailability of Indigenous-specific rehabilitative programming is a systemic '
+                 'failure, not an offender characteristic, and cannot be used as evidence of '
+                 'untreatable risk (Natomagan). It further captures rehabilitative progress, which '
+                 'must be assessed against programming availability — since P(no progress | no '
+                 'programs) ≠ P(no progress | programs + refusal), a critical diagnostic '
+                 'distinction (Natomagan).',
      'primary_auth': [{'citation': 'R v Gladue [1999] 1 SCR 688',
                        'para': 'paras 67-68, 90',
                        'principle': 'Courts must consider: (a) unique systemic or background '
@@ -1281,12 +1280,12 @@ NODE_DOCTRINE = {
 
     # ── NODE 18: SCE / Gladue profile audit (Gladue / Ewert / Morris / Ellis) ──
     18: {'node_name': 'SCE / Gladue profile audit (Gladue / Ewert / Morris / Ellis)',
-     'function': 'Audits whether the full social-context-of-the-evidence (SCE) profile — '
-                 'Gladue/Ipeelee systemic factors, Morris/Ellis racialised and disadvantage '
-                 'context, and Ewert tool-validity qualification — was substantively engaged in '
-                 'the reasons, as opposed to merely recited or omitted. Feeds record_reliability '
-                 'in the Node 20 computation: a record produced without genuine profile engagement '
-                 'is a less reliable basis for designation.',
+     'function': 'Audits whether the full Social Context Evidence (SCE) profile — Gladue/Ipeelee '
+                 'systemic factors, Morris/Ellis racialised and disadvantage context, and Ewert '
+                 'tool-validity qualification — was substantively engaged in the reasons, as '
+                 'opposed to merely recited or omitted. Feeds record_reliability in the Node 20 '
+                 'computation: a record produced without genuine profile engagement is a less '
+                 'reliable basis for designation.',
      'primary_auth': [{'citation': 'R v Gladue [1999] 1 SCR 688',
                        'para': 'paras 64-93',
                        'principle': 'Mandatory consideration of systemic/background factors for '
