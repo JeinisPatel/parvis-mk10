@@ -741,6 +741,7 @@ def compute_do_risk(posteriors: dict, collider_discount: bool = False) -> float:
         - 0.15 * p.get(6, 0.5)    # N6  IAC
         - 0.30 * p.get(17, 0.5)   # N17 over-policing
         - 0.20 * p.get(14, 0.5)   # N14 temporal distortion
+        - 0.25 * p.get(12, 0.5)   # N12 judicial provenance (Gladue error / bias, past+present judges) per §5.1.12
         - 0.15 * p.get(18, 0.5),  # N18 SCE Profile audit (per §5.1.18 §6 + Q6=A)
         0.30, 1.0
     ))
