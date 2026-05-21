@@ -45,6 +45,7 @@ const NAV: NavGroup[] = [
       { href: '/chat',      label: 'Intake (chat)',    icon: 'chat',    status: 'todo' },
       { href: '/record',    label: 'Criminal record',  icon: 'record',  status: 'todo' },
       { href: '/documents', label: 'Documents',        icon: 'doc',     status: 'todo' },
+      { href: '/risk',   label: 'Risk & distortions',      icon: 'shield',  status: 'todo' },
     ],
   },
   {
@@ -52,7 +53,6 @@ const NAV: NavGroup[] = [
     items: [
       { href: '/gladue', label: 'Gladue factors',          icon: 'feather', status: 'todo' },
       { href: '/sce',    label: 'SCE — Morris / Ellis',    icon: 'scale',   status: 'todo' },
-      { href: '/risk',   label: 'Risk & distortions',      icon: 'shield',  status: 'todo' },
     ],
   },
   {
