@@ -30,6 +30,7 @@ function blankConviction(): Conviction {
     bail_denied:              false,
     counsel_inadequate:       false,
     overpoliced_jurisdiction: false,
+    brutal:                   false,
     plea_under_pressure:      false,
     notes:                    '',
   };

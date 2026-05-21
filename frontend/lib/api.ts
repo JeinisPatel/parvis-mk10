@@ -129,6 +129,7 @@ export interface Conviction {
   bail_denied:                boolean;
   counsel_inadequate:         boolean;
   overpoliced_jurisdiction:   boolean;
+  brutal:                     boolean;
   plea_under_pressure:        boolean;
   notes:                      string;
 }

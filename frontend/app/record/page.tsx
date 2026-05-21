@@ -480,6 +480,12 @@ function ConvictionCard({
           </div>
         </Field>
 
+        <Field label="Aggravating factors" caption="Assessed on the facts of this offence — current or historical">
+          <div className="grid grid-cols-2 gap-1">
+            <Checkbox checked={c.brutal} onChange={(v) => onUpdate('brutal', v)} label="Conduct was brutal (s.753(1)(a)(iii))" />
+          </div>
+        </Field>
+
         <Field label="Notes" caption="Optional — relevant context not captured above">
           <Textarea value={c.notes} onChange={(v) => onUpdate('notes', v)} rows={2} />
         </Field>
