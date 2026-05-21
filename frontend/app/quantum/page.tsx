@@ -297,8 +297,8 @@ function BlochSphereCanvas({
       return new THREE.Line(g, m);
     };
     scene.add(axis(new THREE.Vector3(-1.25, 0, 0), new THREE.Vector3(1.25, 0, 0), 0xa32d2d));
-    scene.add(axis(new THREE.Vector3(0, -1.25, 0), new THREE.Vector3(0, 1.25, 0), 0x534ab7));
-    scene.add(axis(new THREE.Vector3(0, 0, -1.25), new THREE.Vector3(0, 0, 1.25), 0x3b6d11));
+    scene.add(axis(new THREE.Vector3(0, -1.25, 0), new THREE.Vector3(0, 1.25, 0), 0x3b6d11));
+    scene.add(axis(new THREE.Vector3(0, 0, -1.25), new THREE.Vector3(0, 0, 1.25), 0x534ab7));
 
     // Equator (superposition ring).
     const eqPts: THREE.Vector3[] = [];

@@ -58,7 +58,7 @@ def compute_bloch_angles(p_high: float, risk_weight: float, mitigation_weight: f
     """
     # Polar angle: maps P(High) → θ
     # P=1 → θ=0 (north), P=0.5 → θ=π/2 (equator), P=0 → θ=π (south)
-    theta = np.arccos(np.clip(1.0 - 2.0 * p_high, -1, 1))
+    theta = np.arccos(np.clip(2.0 * p_high - 1.0, -1, 1))
 
     # Azimuthal: encodes narrative balance
     # High mitigation weight → pushes toward φ=π (mitigation-dominant)
@@ -138,7 +138,7 @@ def draw_bloch_sphere(
     # ── Classical probability comparison line ─────────────────────────────────
     if classical_p is not None:
         # Map classical probability to sphere z-axis position
-        cl_z = 1.0 - 2.0 * classical_p
+        cl_z = 2.0 * classical_p - 1.0
         ax.plot([-1.1, 1.1], [0, 0], [cl_z, cl_z],
                 color='#534AB7', linewidth=1.5, linestyle='--', alpha=0.6)
         ax.text(1.15, 0, cl_z,
