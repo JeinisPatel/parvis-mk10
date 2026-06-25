@@ -271,7 +271,7 @@ export default function AuditPage() {
     <main className="min-h-screen bg-stone-50 text-stone-900">
       <div className="max-w-4xl mx-auto px-6 py-12">
         <header className="mb-12">
-          <Link href="/" className="text-sm text-stone-500 hover:text-stone-700">
+          <Link href="/overview" className="text-sm text-stone-500 hover:text-stone-700">
             Overview
           </Link>
           <h1 className="mt-3 font-serif text-4xl text-stone-900">Audit report</h1>

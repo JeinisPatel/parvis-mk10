@@ -15,23 +15,38 @@ interface Props {
   onClear:     (nodeId: string) => void;
 }
 
+/** Family → soft tint, for the quiet chip background (RATIO restraint). */
+const SOFT: Record<string, string> = {
+  risk:        PV.riskSoft,
+  distortion:  PV.distortionSoft,
+  mitigation:  PV.mitigationSoft,
+  dual:        PV.dualSoft,
+  special:     PV.specialSoft,
+  constraint:  PV.constraintSoft,
+  output:      PV.outputSoft,
+};
+
 /**
  * NodeCard — one row in the Risk & distortions screen.
  *
  *   ▍ N5  Invalid risk tools          ▢ toggle    [─────●───]  82%
  *
- * The left bar is the family colour. The toggle expresses hard evidence
- * (0 / 1). The slider expresses the practitioner's confidence as
- * P(node = true). The trailing number is the live posterior from VE.
+ * The left bar is the muted family colour. The toggle expresses hard evidence
+ * (0 / 1); the slider expresses the practitioner's confidence as
+ * P(node = true), feeding the post-VE soft-shift. The trailing number is the
+ * live posterior from VE.
  *
- * When the slider crosses 0.5, the toggle flips automatically. The
- * underlying state owns both; this component only renders.
+ * Mk 10 note: the visual treatment is RATIO-muted (quiet family chip on a soft
+ * tint instead of white-on-saturated), but every control and its wiring —
+ * toggle, confidence slider, clear, the soft-shift API, the auto-rerun — is
+ * exactly as Mk 9. Nothing about the engine or the interaction changed.
  */
 export function NodeCard({ nodeId, evidence, posterior, onToggle, onSlider, onClear }: Props) {
   const meta = NODES[nodeId];
   if (!meta) return null;
 
   const color = TYPE_COLORS[meta.type];
+  const soft  = SOFT[meta.type] ?? PV.paper3;
   const active = evidence?.value === 1;
   const sliderValue = evidence?.slider ?? (posterior ?? 0.5);
   const sliderPct = Math.round(sliderValue * 100);
@@ -49,17 +64,19 @@ export function NodeCard({ nodeId, evidence, posterior, onToggle, onSlider, onCl
       }}
     >
       {/* Family colour bar */}
-      <div
-        style={{
-          width: 4, height: 28, borderRadius: 2, alignSelf: 'center', background: color,
-        }}
-      />
+      <div style={{ width: 4, height: 28, borderRadius: 2, alignSelf: 'center', background: color }} />
 
-      {/* Node id chip */}
+      {/* Node id chip — quiet: family hue on its soft tint */}
       <div
-        className="font-mono font-bold text-white rounded text-center"
+        className="font-mono rounded text-center"
         style={{
-          background: color, fontSize: 11, padding: '3px 0', lineHeight: 1.2,
+          background: soft,
+          color,
+          fontSize: 11,
+          fontWeight: 500,
+          letterSpacing: '0.04em',
+          padding: '3px 0',
+          lineHeight: 1.2,
         }}
       >
         N{nodeId}
@@ -70,10 +87,7 @@ export function NodeCard({ nodeId, evidence, posterior, onToggle, onSlider, onCl
         <span className="text-ink" style={{ fontSize: 13.5, fontWeight: 500 }}>
           {meta.short}
         </span>
-        <span
-          className="font-serif italic text-ink3 truncate"
-          style={{ fontSize: 11.5 }}
-        >
+        <span className="font-serif italic text-ink3 truncate" style={{ fontSize: 11.5 }}>
           {meta.name}
         </span>
       </div>
@@ -90,18 +104,10 @@ export function NodeCard({ nodeId, evidence, posterior, onToggle, onSlider, onCl
           fontSize: 10,
           letterSpacing: '0.06em',
           textTransform: 'uppercase',
-          background: !meta.ev
-            ? PV.paper3
-            : active
-              ? color
-              : 'transparent',
-          color: !meta.ev
-            ? PV.ink4
-            : active
-              ? '#fff'
-              : PV.ink3,
-          border: `1px solid ${!meta.ev ? PV.border : active ? color : PV.border3}`,
-          cursor: meta.ev ? 'pointer' : 'not-allowed',
+          background: !meta.ev ? PV.paper3 : active ? color : 'transparent',
+          color:      !meta.ev ? PV.ink4 : active ? PV.ground : PV.ink3,
+          border:     `1px solid ${!meta.ev ? PV.border : active ? color : PV.border3}`,
+          cursor:     meta.ev ? 'pointer' : 'not-allowed',
         }}
       >
         {!meta.ev ? 'derived' : active ? 'present' : 'absent'}
@@ -145,7 +151,7 @@ export function NodeCard({ nodeId, evidence, posterior, onToggle, onSlider, onCl
         type="button"
         onClick={() => onClear(nodeId)}
         disabled={!hasEvidence}
-        className="text-ink4 hover:text-risk transition-colors"
+        className="text-ink4 transition-colors"
         title="Clear evidence for this node"
         style={{
           opacity: hasEvidence ? 1 : 0.25,

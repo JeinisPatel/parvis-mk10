@@ -73,13 +73,13 @@ export const NODES: Record<string, NodeMeta> = {
 };
 
 export const TYPE_COLORS: Record<NodeType, string> = {
-  constraint: '#BA7517',
-  risk:       '#A32D2D',
-  distortion: '#185FA5',
-  mitigation: '#3B6D11',
-  dual:       '#534AB7',
-  special:    '#0F6E56',
-  output:     '#993C1D',
+  constraint: '#9C7034',
+  risk:       '#9E5147',
+  distortion: '#4E6A85',
+  mitigation: '#5E7048',
+  dual:       '#6B5E86',
+  special:    '#3F6E62',
+  output:     '#8C5238',
 };
 
 export function nodeColor(id: string | number): string {
