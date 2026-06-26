@@ -72,7 +72,7 @@ app = FastAPI(
 app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.cors_origins,
-    allow_origin_regex=r"^(tauri://localhost|https?://tauri\.localhost|https://parvis-mk9-lxfx(-[a-z0-9]+-jeinis-patel-s-projects)?\.vercel\.app)$",
+    allow_origin_regex=r"^(tauri://localhost|https?://tauri\.localhost|https://parvis-mk10(-[a-z0-9]+-jeinis-patel-s-projects)?\.vercel\.app|https://parvis\.ethical-ai\.ca|https://([a-z0-9-]+\.)?ethical-ai\.ca)$",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
