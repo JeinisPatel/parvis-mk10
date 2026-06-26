@@ -21,7 +21,7 @@ import { sessionHeaders } from './sessionId';
  * backend URL — e.g. `https://parvis-backend.up.railway.app` — and the
  * same relative-looking paths become absolute requests to that origin.
  */
-export const API_BASE: string = process.env.NEXT_PUBLIC_API_BASE || '';
+export const API_BASE: string = process.env.NEXT_PUBLIC_API_BASE || 'https://parvis-mk10-production.up.railway.app';
 
 
 export interface InferenceRequest {
